@@ -19,9 +19,36 @@ namespace Syria_Transfer
     /// </summary>
     public partial class WindowConfirmation : Window
     {
-        public WindowConfirmation()
+
+        public WindowConfirmation(string number, string amount)
         {
             InitializeComponent();
+            if (number.StartsWith("09"))
+            {
+                textBlockCodeorNumber.Text = "to the number";
+                number = number.Insert(7, " ");
+                number = number.Insert(4, " ");
+                textBlockNumber.Text = number;
+            }
+            else
+            {
+                textBlockCodeorNumber.Text = "to the code";
+                number = number.Insert(4, " ");
+                textBlockNumber.Text = number;
+            }
+            textBlockAmount.Text = amount;
+        }
+
+        private void button_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender == buttonYes)
+            {
+                DialogResult = true;
+            }
+            else
+                DialogResult = false;
+
+            Close();
         }
     }
 }

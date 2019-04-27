@@ -28,16 +28,21 @@ namespace Syria_Transfer
         string loginURL = "https://newabili.syriatel.com.sy/Login.aspx";
         string rechrgeURL = "https://newabili.syriatel.com.sy/Recharge.aspx";
 
-        string username = "hibh";
+        string username = "HK11712";
         string password = "fnsn4575";
 
+        int transferAmount, Price;
+
         double balance = 0;
+        int price200syp = 1000;
 
         HttpClient client;
         HttpClientHandler handler;
         public MainWindow()
         {
             InitializeComponent();
+            textBox_Amount.TextChanged += textBox_Amount_TextChanged;
+            textBox_Number.Focus();
         }
 
         async private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -82,40 +87,58 @@ namespace Syria_Transfer
         {
             string number = textBox_Number.Text;
             string transferAmount = textBox_Amount.Text;
+            WindowConfirmation win = new WindowConfirmation(number, transferAmount);
+            if (win.ShowDialog() == true)
+            {
+                HttpResponseMessage response;
+                string responseString;
 
+                response = await client.GetAsync(rechrgeURL);
+                responseString = await response.Content.ReadAsStringAsync();
 
+                var values = extractValues(responseString);
+                values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24SubscriberMSIDNTextBox", number));
+                values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24ConfirmSubscriberMSISDNTextBox", number));
+                values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24RechargeAmountTextBox", transferAmount));
+                values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24NotificationDropDownList", "1"));
+                values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24RechargeSubmitButton", "Recharge"));
+                FormUrlEncodedContent postLoginContent = new FormUrlEncodedContent(values);
 
-            HttpResponseMessage response;
-            string responseString;
-            
-            response = await client.GetAsync(rechrgeURL);
-            responseString = await response.Content.ReadAsStringAsync();
+                response = await client.PostAsync(rechrgeURL, postLoginContent);
+                responseString = await response.Content.ReadAsStringAsync();
+                //0936158477
+            }
 
-            var values = extractValues(responseString);
-            values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24SubscriberMSIDNTextBox", number));
-            values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24ConfirmSubscriberMSISDNTextBox", number));
-            values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24RechargeAmountTextBox", transferAmount));
-            values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24NotificationDropDownList", "1"));
-            values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24RechargeSubmitButton", "Recharge"));
-            FormUrlEncodedContent postLoginContent = new FormUrlEncodedContent(values);
+        }
 
-            response = await client.PostAsync(rechrgeURL, postLoginContent);
-            responseString = await response.Content.ReadAsStringAsync();
+         bool transferCredits()
+        {
+            return false;
+        }
 
+        private void textbox_Focus(object sender, RoutedEventArgs e)
+        {
+            var tb = sender as TextBox;
+            tb.SelectAll();
         }
 
         private void textBox_Amount_TextChanged(object sender, TextChangedEventArgs e)
         {
-            int transferAmount;
+            price200syp = 1000;
             if (int.TryParse(textBox_Amount.Text, out transferAmount))
             {
                 if (transferAmount > 5000)
                 {
+                    price200syp = 0;
                     button_Transfer.IsEnabled = false;
                     textBox_Amount.Background = Brushes.Red;
                 }
                 else if (transferAmount > 1000)
                 {
+                    if (transferAmount > 4000)
+                        price200syp = 920;
+                    else if (transferAmount > 3000)
+                        price200syp = 933;
                     button_Transfer.IsEnabled = true;
                     textBox_Amount.Background = Brushes.LightYellow;
                 }
@@ -124,12 +147,35 @@ namespace Syria_Transfer
                     button_Transfer.IsEnabled = true;
                     textBox_Amount.Background = Brushes.LightGreen;
                 }
+
+                decimal priceCorrection = transferAmount / 200 * price200syp;
+                priceCorrection = priceCorrection / 500;
+                Price = (int)(Math.Ceiling(priceCorrection) * 500);
+
+                labelPrice.Content = Price.ToString();
             }
             else
             {
                 button_Transfer.IsEnabled = false;
                 textBox_Amount.Background = Brushes.Red;
             }
+        }
+    }
+
+    public class Transfer
+    {
+
+        public DateTime Date { get; set; }
+        public string Number { get; set; }
+        public DateTime Amount { get; set; }
+        public DateTime Price { get; set; }
+        public static void SaveTransfers()
+        {
+
+        }
+        public static void GetTransfers()
+        {
+
         }
     }
 }

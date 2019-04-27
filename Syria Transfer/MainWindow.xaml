@@ -5,23 +5,28 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Syria_Transfer"
         mc:Ignorable="d" Loaded="Window_Loaded"
-        Title="MainWindow" Height="350" Width="391.829">
+        Title="MainWindow" Height="379.878" Width="391.829">
     <Grid>
-        <Button x:Name="button_Transfer" Content="Transfer" HorizontalAlignment="Left" Height="45" Margin="98,245,0,0" VerticalAlignment="Top" 
-                Width="192" Click="button_Transfer_Click" FontSize="18" IsDefault="True"/>
-        <Label  Content="Number" HorizontalAlignment="Left" Margin="49,87,0,0" VerticalAlignment="Top"/>
-        <Label  Content="Amount" HorizontalAlignment="Left" Margin="49,143,0,0" VerticalAlignment="Top"/>
-        <CheckBox x:Name="checkBox_Riad" Content="Riad" HorizontalAlignment="Left" Margin="332,263,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="button_Transfer" Content="Transfer" HorizontalAlignment="Left" Height="45" Margin="109,266,0,0" VerticalAlignment="Top" 
+                Width="192" Click="button_Transfer_Click" FontSize="18" IsDefault="True" IsEnabled="False"/>
+        <TextBlock  Text="Number" HorizontalAlignment="Left" Margin="49,87,0,0" VerticalAlignment="Top"/>
+        <TextBlock  Text="Amount" HorizontalAlignment="Left" Margin="49,143,0,0" VerticalAlignment="Top"/>
+        <TextBlock  Text="Price" HorizontalAlignment="Left" Margin="60,197,0,0" VerticalAlignment="Top"/>
+        <CheckBox x:Name="checkBox_Riad" Content="Riad" HorizontalAlignment="Left" Margin="332,281,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="textBox_Number" HorizontalAlignment="Left" Height="43" Margin="167,73,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" 
                  Width="183" HorizontalContentAlignment="center" VerticalContentAlignment="Center" FontSize="24" Text="0995845695" Foreground="blue"
-                 />
+                 GotFocus="textbox_Focus"/>
         <TextBox x:Name="textBox_Amount" HorizontalAlignment="Left" Height="41" Margin="183,131,0,0" TextWrapping="Wrap" Text="1000" FontSize="24"
                  VerticalAlignment="Top" Width="154" HorizontalContentAlignment="center" VerticalContentAlignment="Center" Background="LightGreen"
-                 TextChanged="textBox_Amount_TextChanged"/>
+                 GotFocus="textbox_Focus"/>
         <Label x:Name="label_Balance" Content="Balance = " HorizontalAlignment="Left" Margin="78,10,0,0" VerticalAlignment="Top"
                FontSize="26" FontFamily="MS Gothic" Foreground="DarkKhaki"/>
-        <Label x:Name="label_Transfers" Content="Transfers" HorizontalAlignment="Left" Margin="37,187,0,0" VerticalAlignment="Top"
+        <Label x:Name="label_Transfers" Content="Transfers" HorizontalAlignment="Left" Margin="0,268,0,0" VerticalAlignment="Top"
                FontSize="16" FontFamily="Segoe Print" Cursor="Hand"/>
+        <Label x:Name="labelInfo" Content="info" HorizontalAlignment="Stretch" Margin="10,316,10,0" VerticalAlignment="Top" HorizontalContentAlignment="Center"
+               Foreground="Black" FontFamily="Poor Richard" FontSize="16"/>
+        <Label x:Name="labelPrice" Content="5000" HorizontalAlignment="Left" Margin="183,182,0,0" VerticalAlignment="Top" Width="154" Height="42"
+               HorizontalContentAlignment="Center" FontSize="24" BorderThickness="1" BorderBrush="Black"/>
 
     </Grid>
 </Window>

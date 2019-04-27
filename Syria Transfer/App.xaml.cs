@@ -13,5 +13,6 @@ namespace Syria_Transfer
     /// </summary>
     public partial class App : Application
     {
+        public static List<Transfer> Transfers;
     }
 }

@@ -3,15 +3,20 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Syria_Transfer" ResizeMode="NoResize"
+        xmlns:local="clr-namespace:Syria_Transfer" ResizeMode="CanMinimize"
         mc:Ignorable="d" WindowStartupLocation="CenterOwner"
-        Title="WindowConfirmation" Height="197.56" Width="387.805">
+        Title="WindowConfirmation" Height="200" Width="400">
     <Grid>
         <TextBlock HorizontalAlignment="Left" Margin="36,23,0,0" TextWrapping="Wrap" Text="Are you sure to transfer " VerticalAlignment="Top" FontSize="14"/>
         <TextBlock x:Name="textBlockAmount" HorizontalAlignment="Left" Margin="195,5,0,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Top" FontSize="36" FontFamily="Segoe UI Black"/>
         <TextBlock  HorizontalAlignment="Left" Margin="299,18,0,0" TextWrapping="Wrap" Text="SYP" VerticalAlignment="Top" FontSize="20" Foreground="#FFCD0909"/>
-        <Button x:Name="buttonYes" Content="Yes" HorizontalAlignment="Left" Margin="93,132,0,0" VerticalAlignment="Top" Width="75"/>
-        <Button x:Name="buttonNo" Content="No" HorizontalAlignment="Left" Margin="202,132,0,0" VerticalAlignment="Top" Width="75"/>
+        <Button x:Name="buttonYes" Content="Yes" HorizontalAlignment="Left" Margin="93,132,0,0" VerticalAlignment="Top" Width="75"
+                Click="button_Click" IsDefault="True"/>
+        <Button x:Name="buttonNo" Content="No" HorizontalAlignment="Left" Margin="202,132,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
+        <TextBlock x:Name="textBlockCodeorNumber" HorizontalAlignment="Left" Margin="43,77,0,0" TextWrapping="Wrap" Text="to the number" VerticalAlignment="Top"/>
+        <TextBlock x:Name="textBlockNumber" HorizontalAlignment="Left" Margin="135,65,0,0" TextWrapping="Wrap" Text="0921564859" 
+                   VerticalAlignment="Top" RenderTransformOrigin="0.201,-0.242" FontFamily="Lucida Console" FontSize="30" 
+                   Background="#7FABEB7D" Padding="5"/>
 
     </Grid>
 </Window>
