@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Syria_Transfer" ResizeMode="CanMinimize"
-        mc:Ignorable="d" WindowStartupLocation="CenterOwner"
+        xmlns:local="clr-namespace:Syria_Transfer"
+        mc:Ignorable="d" WindowStartupLocation="CenterScreen"
         Title="WindowConfirmation" Height="200" Width="400">
     <Grid>
         <TextBlock HorizontalAlignment="Left" Margin="36,23,0,0" TextWrapping="Wrap" Text="Are you sure to transfer " VerticalAlignment="Top" FontSize="14"/>
@@ -16,7 +16,7 @@
         <TextBlock x:Name="textBlockCodeorNumber" HorizontalAlignment="Left" Margin="43,77,0,0" TextWrapping="Wrap" Text="to the number" VerticalAlignment="Top"/>
         <TextBlock x:Name="textBlockNumber" HorizontalAlignment="Left" Margin="135,65,0,0" TextWrapping="Wrap" Text="0921564859" 
                    VerticalAlignment="Top" RenderTransformOrigin="0.201,-0.242" FontFamily="Lucida Console" FontSize="30" 
-                   Background="#7FABEB7D" Padding="5"/>
+                   Background="#7FABEB7D" Padding="5" Foreground="#FF1647D0"/>
 
     </Grid>
 </Window>

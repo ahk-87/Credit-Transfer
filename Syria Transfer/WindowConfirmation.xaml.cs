@@ -20,7 +20,7 @@ namespace Syria_Transfer
     public partial class WindowConfirmation : Window
     {
 
-        public WindowConfirmation(string number, string amount)
+        public WindowConfirmation(string number, int amount)
         {
             InitializeComponent();
             if (number.StartsWith("09"))
@@ -36,7 +36,7 @@ namespace Syria_Transfer
                 number = number.Insert(4, " ");
                 textBlockNumber.Text = number;
             }
-            textBlockAmount.Text = amount;
+            textBlockAmount.Text = amount.ToString();
         }
 
         private void button_Click(object sender, RoutedEventArgs e)

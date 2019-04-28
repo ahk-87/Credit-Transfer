@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -28,12 +30,9 @@ namespace Syria_Transfer
         string loginURL = "https://newabili.syriatel.com.sy/Login.aspx";
         string rechrgeURL = "https://newabili.syriatel.com.sy/Recharge.aspx";
 
-        string username = "HK11712";
-        string password = "fnsn4575";
 
-        int transferAmount, Price;
+        int transferAmount = 1000, price = 5000;
 
-        double balance = 0;
         int price200syp = 1000;
 
         HttpClient client;
@@ -49,6 +48,10 @@ namespace Syria_Transfer
         {
             handler = new HttpClientHandler();
             client = new HttpClient(handler);
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0");
+            client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
+            client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
 
             HttpResponseMessage response;
             string responseString;
@@ -56,8 +59,8 @@ namespace Syria_Transfer
             responseString = await response.Content.ReadAsStringAsync();
 
             var values = extractValues(responseString);
-            values.Add(new KeyValuePair<string, string>("UsernameTextBox", username));
-            values.Add(new KeyValuePair<string, string>("PasswordTextBox", password));
+            values.Add(new KeyValuePair<string, string>("UsernameTextBox", App.Username));
+            values.Add(new KeyValuePair<string, string>("PasswordTextBox", App.Password));
             values.Add(new KeyValuePair<string, string>("SubmitButton", "Login"));
             FormUrlEncodedContent postLoginContent = new FormUrlEncodedContent(values);
 
@@ -68,6 +71,7 @@ namespace Syria_Transfer
             string balanceString = Regex.Match(responseString, "MainContentPlaceHolder_PointOfSalesMainContentPlaceHolder_BalanceText\"\\>(.*?)\\</span").Groups[1].Value;
             label_Balance.Content = "Balance = " + balanceString;
 
+            button_Transfer.IsEnabled = true;
         }
 
         List<KeyValuePair<string, string>> extractValues(string body)
@@ -85,41 +89,88 @@ namespace Syria_Transfer
 
         async private void button_Transfer_Click(object sender, RoutedEventArgs e)
         {
-            string number = textBox_Number.Text;
-            string transferAmount = textBox_Amount.Text;
-            WindowConfirmation win = new WindowConfirmation(number, transferAmount);
+            string numberString = textBox_Number.Text;
+            WindowConfirmation win = new WindowConfirmation(numberString, transferAmount);
             if (win.ShowDialog() == true)
             {
-                HttpResponseMessage response;
-                string responseString;
+                int amount = transferAmount;
+                int amountToBeSent;
+                while (amount > 0)
+                {
+                    if (amount > 1500)
+                        amountToBeSent = 1500;
+                    else
+                        amountToBeSent = amount;
 
-                response = await client.GetAsync(rechrgeURL);
-                responseString = await response.Content.ReadAsStringAsync();
+                    labelInfo.Content = string.Format("transferring {0} to {1} ....", amountToBeSent, numberString); ;
+                    labelInfo.Foreground = Brushes.Black;
 
-                var values = extractValues(responseString);
-                values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24SubscriberMSIDNTextBox", number));
-                values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24ConfirmSubscriberMSISDNTextBox", number));
-                values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24RechargeAmountTextBox", transferAmount));
-                values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24NotificationDropDownList", "1"));
-                values.Add(new KeyValuePair<string, string>("ctl00%24ctl00%24MainContentPlaceHolder%24PointOfSalesMainContentPlaceHolder%24RechargeSubmitButton", "Recharge"));
-                FormUrlEncodedContent postLoginContent = new FormUrlEncodedContent(values);
+                    try
+                    {
+                        if (!await transferCredits(numberString, amountToBeSent.ToString()))
+                            return;
+                    }
+                    catch (Exception ex)
+                    {
+                        labelInfo.Content = ex.Message;
+                        labelInfo.Foreground = Brushes.Red;
+                    }
+                    labelInfo.Content = string.Format("{0} transferred to {1}", amount, numberString); ;
+                    labelInfo.Foreground = Brushes.Brown;
+                    amount -= 1500;
+                }
 
-                response = await client.PostAsync(rechrgeURL, postLoginContent);
-                responseString = await response.Content.ReadAsStringAsync();
-                //0936158477
+                labelInfo.Content = string.Format("{0} SYP transferred successfuly to {1}", transferAmount, numberString); ;
+                labelInfo.Foreground = Brushes.Green;
+
+                Transfer t = new Transfer(DateTime.Now, numberString, transferAmount, price);
+                App.Transfers.Insert(0, t);
+                Transfer.SaveTransfers();
             }
-
         }
 
-         bool transferCredits()
+        async Task<bool> transferCredits(string number, string transferAmount)
         {
-            return false;
+            await Task.Delay(2000);
+            HttpResponseMessage response;
+            string responseString;
+
+            response = await client.GetAsync(rechrgeURL);
+            responseString = await response.Content.ReadAsStringAsync();
+
+            var values = extractValues(responseString);
+
+            values.Add(new KeyValuePair<string, string>("ctl00$ctl00$MainContentPlaceHolder$PointOfSalesMainContentPlaceHolder$SubscriberMSIDNTextBox", number));
+            values.Add(new KeyValuePair<string, string>("ctl00$ctl00$MainContentPlaceHolder$PointOfSalesMainContentPlaceHolder$ConfirmSubscriberMSISDNTextBox", number));
+            values.Add(new KeyValuePair<string, string>("ctl00$ctl00$MainContentPlaceHolder$PointOfSalesMainContentPlaceHolder$RechargeAmountTextBox", transferAmount));
+            values.Add(new KeyValuePair<string, string>("ctl00$ctl00$MainContentPlaceHolder$PointOfSalesMainContentPlaceHolder$NotificationDropDownList", "1"));
+            values.Add(new KeyValuePair<string, string>("ctl00$ctl00$MainContentPlaceHolder$PointOfSalesMainContentPlaceHolder$RechargeSubmitButton", "Recharge"));
+            FormUrlEncodedContent postLoginContent = new FormUrlEncodedContent(values);
+
+            response = await client.PostAsync(rechrgeURL, postLoginContent);
+            responseString = await response.Content.ReadAsStringAsync();
+            if (!responseString.Contains("successfully"))
+            {
+                string error = Regex.Match(responseString, "style=\"color: Red; \"\\>(.*?)\\</span").Groups[1].Value;
+                labelInfo.Content = error;
+                labelInfo.Foreground = Brushes.Red;
+                return false;
+            }
+
+            string balanceString = Regex.Match(responseString, "MainContentPlaceHolder_PointOfSalesMainContentPlaceHolder_BalanceText\"\\>(.*?)\\</span").Groups[1].Value;
+            label_Balance.Content = "Balance = " + balanceString;
+            return true;
         }
 
         private void textbox_Focus(object sender, RoutedEventArgs e)
         {
             var tb = sender as TextBox;
             tb.SelectAll();
+        }
+
+        private void TextBlock_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            Process.Start(App.transfersPath);
         }
 
         private void textBox_Amount_TextChanged(object sender, TextChangedEventArgs e)
@@ -150,9 +201,9 @@ namespace Syria_Transfer
 
                 decimal priceCorrection = transferAmount / 200 * price200syp;
                 priceCorrection = priceCorrection / 500;
-                Price = (int)(Math.Ceiling(priceCorrection) * 500);
+                price = (int)(Math.Ceiling(priceCorrection) * 500);
 
-                labelPrice.Content = Price.ToString();
+                labelPrice.Content = price.ToString();
             }
             else
             {
@@ -164,18 +215,50 @@ namespace Syria_Transfer
 
     public class Transfer
     {
-
         public DateTime Date { get; set; }
         public string Number { get; set; }
-        public DateTime Amount { get; set; }
-        public DateTime Price { get; set; }
+        public int Amount { get; set; }
+        public int Price { get; set; }
+
+        public Transfer(DateTime date, string number, int amount, int price)
+        {
+            Date = date;
+            Number = number;
+            Amount = amount;
+            Price = price;
+        }
+        public Transfer(string s)
+        {
+            string[] data = s.Split(new char[] { ',' });
+
+            //Date = TimeZoneInfo.ConvertTimeFromUtc(DateTime.Parse(data[0]), TimeZoneInfo.Local);
+            Date = DateTime.ParseExact(data[0], "dd-MMM-yy hh:mm:ss tt", CultureInfo.CurrentCulture);
+            Number = data[1];
+            Amount = int.Parse(data[2]);
+            Price = int.Parse(data[3]);
+        }
+
+
+        public override string ToString()
+        {
+            return string.Format("{0},{1},{2},{3}", Date.ToString("dd-MMM-yy hh:mm:ss tt"), Number, Amount, Price);
+        }
         public static void SaveTransfers()
         {
+            File.WriteAllLines(App.transfersPath, App.Transfers.ConvertAll<string>(t => t.ToString()));
 
         }
         public static void GetTransfers()
         {
-
+            if (File.Exists(App.transfersPath))
+            {
+                foreach (string s in File.ReadAllLines(App.transfersPath))
+                {
+                    App.Transfers.Add(new Transfer(s));
+                }
+            }
+            else
+                File.Create(App.transfersPath);
         }
     }
 }
