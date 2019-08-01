@@ -30,10 +30,12 @@ namespace Syria_Transfer
         string loginURL = "https://newabili.syriatel.com.sy/Login.aspx";
         string rechrgeURL = "https://newabili.syriatel.com.sy/Recharge.aspx";
 
+        string viberLocation = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Viber\\Viber.exe";
 
-        int transferAmount = 1000, price = 5000;
 
-        int price200syp = 1000;
+        int transferAmount = 1000, price = 4000;
+
+        int price200syp = 801;
 
         HttpClient client;
         HttpClientHandler handler;
@@ -46,6 +48,8 @@ namespace Syria_Transfer
 
         async private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            updateSentDay(DateTime.Now.AddHours(-2));
+
             handler = new HttpClientHandler();
             client = new HttpClient(handler);
             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0");
@@ -90,43 +94,81 @@ namespace Syria_Transfer
         async private void button_Transfer_Click(object sender, RoutedEventArgs e)
         {
             string numberString = textBox_Number.Text;
-            WindowConfirmation win = new WindowConfirmation(numberString, transferAmount);
-            if (win.ShowDialog() == true)
+
+
+            TelCompany com = (TelCompany)button_Transfer.Tag;
+            if (com == TelCompany.MTN)
             {
-                int amount = transferAmount;
-                int amountToBeSent;
-                while (amount > 0)
-                {
-                    if (amount > 1500)
-                        amountToBeSent = 1500;
-                    else
-                        amountToBeSent = amount;
-
-                    labelInfo.Content = string.Format("transferring {0} to {1} ....", amountToBeSent, numberString); ;
-                    labelInfo.Foreground = Brushes.Black;
-
-                    try
-                    {
-                        if (!await transferCredits(numberString, amountToBeSent.ToString()))
-                            return;
-                    }
-                    catch (Exception ex)
-                    {
-                        labelInfo.Content = ex.Message;
-                        labelInfo.Foreground = Brushes.Red;
-                    }
-                    labelInfo.Content = string.Format("{0} transferred to {1}", amount, numberString); ;
-                    labelInfo.Foreground = Brushes.Brown;
-                    amount -= 1500;
-                }
-
-                labelInfo.Content = string.Format("{0} SYP transferred successfuly to {1}", transferAmount, numberString); ;
+                button_Transfer.IsEnabled = false;
+                Clipboard.SetText(string.Format("{0}\r\n\r\n{1} وحدة", numberString, transferAmount));
+                Process.Start(viberLocation);
+                labelInfo.Content = string.Format("{0} SYP await to be sent by RIAD to {1}", transferAmount, numberString); ;
                 labelInfo.Foreground = Brushes.Green;
 
                 Transfer t = new Transfer(DateTime.Now, numberString, transferAmount, price);
                 App.Transfers.Insert(0, t);
                 Transfer.SaveTransfers();
+
+                updateSentDay(DateTime.Now.AddHours(-2));
             }
+            else
+            {
+                WindowConfirmation win = new WindowConfirmation(numberString, transferAmount);
+                if (win.ShowDialog() == true)
+                {
+                    int amount = transferAmount;
+                    int amountToBeSent;
+
+                    button_Transfer.IsEnabled = false;
+
+                    while (amount > 0)
+                    {
+                        if (amount == 1100)
+                            amountToBeSent = 1000;
+                        else if (amount > 1500)
+                            amountToBeSent = 1500;
+                        else
+                            amountToBeSent = amount;
+
+                        labelInfo.Content = string.Format("transferring {0} to {1} ....", amountToBeSent, numberString); ;
+                        labelInfo.Foreground = Brushes.Black;
+
+                        try
+                        {
+                            if (!await transferCredits(numberString, amountToBeSent.ToString()))
+                                return;
+                        }
+                        catch (Exception ex)
+                        {
+                            labelInfo.Content = ex.Message;
+                            labelInfo.Foreground = Brushes.Red;
+                        }
+                        labelInfo.Content = string.Format("{0} transferred to {1}", amount, numberString); ;
+                        labelInfo.Foreground = Brushes.Brown;
+                        amount -= amountToBeSent;
+                    }
+
+
+                    labelInfo.Content = string.Format("{0} SYP transferred successfuly to {1}", transferAmount, numberString); ;
+                    labelInfo.Foreground = Brushes.Green;
+
+
+                    Transfer t = new Transfer(DateTime.Now, numberString, transferAmount, price);
+                    App.Transfers.Insert(0, t);
+                    Transfer.SaveTransfers();
+
+                    updateSentDay(DateTime.Now.AddHours(-2));
+                }
+            }
+        }
+
+        void updateSentDay(DateTime date)
+        {
+            labelDate.Content = date.ToString("dd-MM-yyyy");
+            labelAmountSent.Content = "SYP sent = " + App.Transfers.Where(
+                t => t.Date.AddHours(-2).ToShortDateString().Equals(date.ToShortDateString())).Sum(d => d.Amount).ToString();
+            labelMoney.Content = "Money = " + App.Transfers.Where(
+                t => t.Date.AddHours(-2).ToShortDateString().Equals(date.ToShortDateString())).Sum(d => d.Price).ToString();
         }
 
         async Task<bool> transferCredits(string number, string transferAmount)
@@ -151,7 +193,7 @@ namespace Syria_Transfer
             responseString = await response.Content.ReadAsStringAsync();
             if (!responseString.Contains("successfully"))
             {
-                string error = Regex.Match(responseString, "style=\"color: Red; \"\\>(.*?)\\</span").Groups[1].Value;
+                string error = Regex.Match(responseString, "style=\"color:Red;\">(.*?)</span").Groups[1].Value;
                 labelInfo.Content = error;
                 labelInfo.Foreground = Brushes.Red;
                 return false;
@@ -173,9 +215,62 @@ namespace Syria_Transfer
             Process.Start(App.transfersPath);
         }
 
+        private void labelDate_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            string dateString = labelDate.Content as string;
+            DateTime date = DateTime.Parse(dateString);
+            updateSentDay(date.AddDays(-1));
+        }
+
+        private void labelDate_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            string dateString = labelDate.Content as string;
+            DateTime date = DateTime.Parse(dateString);
+
+            if (date.ToShortDateString() == DateTime.Now.AddHours(-2).ToShortDateString())
+                return;
+            updateSentDay(date.AddDays(1));
+        }
+
+        private void button_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(viberLocation);
+
+        }
+
+        private void textBox_Number_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (textBox_Number.Text.Length > 0 && textBox_Number.Text[0] > 1600)
+            {
+                StringBuilder build = new StringBuilder();
+                foreach (char c in textBox_Number.Text)
+                {
+                    if (c > 1600)
+                        build.Append(char.ConvertFromUtf32(c - 1584));
+                    else
+                        build.Append(c);
+                }
+                if (build[0] != 1632)
+                    build.Insert(0, '0');
+                textBox_Number.TextChanged -= textBox_Number_TextChanged;
+                textBox_Number.Text = build.ToString();
+                textBox_Number.TextChanged += textBox_Number_TextChanged;
+            }
+            if (textBox_Number.Text.StartsWith("094") || textBox_Number.Text.StartsWith("095") || textBox_Number.Text.StartsWith("096"))
+            {
+                button_Transfer.Content = "Copy, Open Viber";
+                button_Transfer.Tag = TelCompany.MTN;
+            }
+            else
+            {
+                button_Transfer.Content = "Transfer";
+                button_Transfer.Tag = TelCompany.Syriatel;
+            }
+        }
+
         private void textBox_Amount_TextChanged(object sender, TextChangedEventArgs e)
         {
-            price200syp = 1000;
+            price200syp = 801;
             if (int.TryParse(textBox_Amount.Text, out transferAmount))
             {
                 if (transferAmount > 5000)
@@ -184,12 +279,12 @@ namespace Syria_Transfer
                     button_Transfer.IsEnabled = false;
                     textBox_Amount.Background = Brushes.Red;
                 }
-                else if (transferAmount > 1000)
+                else if (transferAmount >= 1000)
                 {
-                    if (transferAmount > 4000)
-                        price200syp = 920;
-                    else if (transferAmount > 3000)
-                        price200syp = 933;
+                    if (transferAmount > 4000 || transferAmount % 1000 == 0)
+                        price200syp = 800;
+                    //else if (transferAmount > 3000)
+                    //    price200syp = 933;
                     button_Transfer.IsEnabled = true;
                     textBox_Amount.Background = Brushes.LightYellow;
                 }
@@ -199,7 +294,7 @@ namespace Syria_Transfer
                     textBox_Amount.Background = Brushes.LightGreen;
                 }
 
-                decimal priceCorrection = transferAmount / 200 * price200syp;
+                double priceCorrection = transferAmount / 200.0 * price200syp;
                 priceCorrection = priceCorrection / 500;
                 price = (int)(Math.Ceiling(priceCorrection) * 500);
 
@@ -213,12 +308,18 @@ namespace Syria_Transfer
         }
     }
 
+    public enum TelCompany
+    {
+        Syriatel,
+        MTN
+    }
     public class Transfer
     {
         public DateTime Date { get; set; }
         public string Number { get; set; }
         public int Amount { get; set; }
         public int Price { get; set; }
+        public TelCompany Company { get; set; }
 
         public Transfer(DateTime date, string number, int amount, int price)
         {
@@ -226,6 +327,7 @@ namespace Syria_Transfer
             Number = number;
             Amount = amount;
             Price = price;
+            if (Number[2] == '4' || Number[2] == '5' || Number[2] == '6') Company = TelCompany.MTN;
         }
         public Transfer(string s)
         {
@@ -236,6 +338,7 @@ namespace Syria_Transfer
             Number = data[1];
             Amount = int.Parse(data[2]);
             Price = int.Parse(data[3]);
+            if (Number[2] == '4' || Number[2] == '5' || Number[2] == '6') Company = TelCompany.MTN;
         }
 
 
