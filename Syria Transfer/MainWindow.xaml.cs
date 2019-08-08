@@ -27,15 +27,15 @@ namespace Syria_Transfer
     public partial class MainWindow : Window
     {
 
-        string loginURL = "https://newabili.syriatel.com.sy/Login.aspx";
-        string rechrgeURL = "https://newabili.syriatel.com.sy/Recharge.aspx";
+        string loginURL = "https://abili.syriatel.com.sy/Login.aspx";
+        string rechrgeURL = "https://abili.syriatel.com.sy/Recharge.aspx";
 
         string viberLocation = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Viber\\Viber.exe";
 
 
         int transferAmount = 1000, price = 4000;
 
-        int price200syp = 801;
+        int price200syp = 800;
 
         HttpClient client;
         HttpClientHandler handler;
@@ -113,6 +113,7 @@ namespace Syria_Transfer
             }
             else
             {
+                labelOldBalance.Content = "old b" + (label_Balance.Content as string).TrimStart(new char[] { 'B' });
                 WindowConfirmation win = new WindowConfirmation(numberString, transferAmount);
                 if (win.ShowDialog() == true)
                 {
@@ -125,6 +126,8 @@ namespace Syria_Transfer
                     {
                         if (amount == 1100)
                             amountToBeSent = 1000;
+                        else if (amount == 700)
+                            amountToBeSent = 600;
                         else if (amount > 1500)
                             amountToBeSent = 1500;
                         else
@@ -152,7 +155,7 @@ namespace Syria_Transfer
                     labelInfo.Content = string.Format("{0} SYP transferred successfuly to {1}", transferAmount, numberString); ;
                     labelInfo.Foreground = Brushes.Green;
 
-
+                    Transfer.GetTransfers();
                     Transfer t = new Transfer(DateTime.Now, numberString, transferAmount, price);
                     App.Transfers.Insert(0, t);
                     Transfer.SaveTransfers();
@@ -250,7 +253,7 @@ namespace Syria_Transfer
                     else
                         build.Append(c);
                 }
-                if (build[0] != 1632)
+                if (build[0] != '0')
                     build.Insert(0, '0');
                 textBox_Number.TextChanged -= textBox_Number_TextChanged;
                 textBox_Number.Text = build.ToString();
@@ -270,7 +273,6 @@ namespace Syria_Transfer
 
         private void textBox_Amount_TextChanged(object sender, TextChangedEventArgs e)
         {
-            price200syp = 801;
             if (int.TryParse(textBox_Amount.Text, out transferAmount))
             {
                 if (transferAmount > 5000)
@@ -279,10 +281,10 @@ namespace Syria_Transfer
                     button_Transfer.IsEnabled = false;
                     textBox_Amount.Background = Brushes.Red;
                 }
-                else if (transferAmount >= 1000)
+                else if (transferAmount > 1000)
                 {
-                    if (transferAmount > 4000 || transferAmount % 1000 == 0)
-                        price200syp = 800;
+                    //if (transferAmount == 2500)
+                    //    price200syp = 801;
                     //else if (transferAmount > 3000)
                     //    price200syp = 933;
                     button_Transfer.IsEnabled = true;
@@ -355,6 +357,7 @@ namespace Syria_Transfer
         {
             if (File.Exists(App.transfersPath))
             {
+                App.Transfers.Clear();
                 foreach (string s in File.ReadAllLines(App.transfersPath))
                 {
                     App.Transfers.Add(new Transfer(s));
