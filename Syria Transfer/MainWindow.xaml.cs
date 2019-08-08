@@ -273,6 +273,7 @@ namespace Syria_Transfer
 
         private void textBox_Amount_TextChanged(object sender, TextChangedEventArgs e)
         {
+            price200syp = 800;
             if (int.TryParse(textBox_Amount.Text, out transferAmount))
             {
                 if (transferAmount > 5000)
