@@ -57,23 +57,23 @@ namespace Syria_Transfer
             client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
             client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
 
-            HttpResponseMessage response;
-            string responseString;
-            response = await client.GetAsync(loginURL);
-            responseString = await response.Content.ReadAsStringAsync();
+            //HttpResponseMessage response;
+            //string responseString;
+            //response = await client.GetAsync(loginURL);
+            //responseString = await response.Content.ReadAsStringAsync();
 
-            var values = extractValues(responseString);
-            values.Add(new KeyValuePair<string, string>("UsernameTextBox", App.Username));
-            values.Add(new KeyValuePair<string, string>("PasswordTextBox", App.Password));
-            values.Add(new KeyValuePair<string, string>("SubmitButton", "Login"));
-            FormUrlEncodedContent postLoginContent = new FormUrlEncodedContent(values);
+            //var values = extractValues(responseString);
+            //values.Add(new KeyValuePair<string, string>("UsernameTextBox", App.Username));
+            //values.Add(new KeyValuePair<string, string>("PasswordTextBox", App.Password));
+            //values.Add(new KeyValuePair<string, string>("SubmitButton", "Login"));
+            //FormUrlEncodedContent postLoginContent = new FormUrlEncodedContent(values);
 
-            response = await client.PostAsync(loginURL, postLoginContent);
+            //response = await client.PostAsync(loginURL, postLoginContent);
 
-            response = await client.GetAsync(rechrgeURL);
-            responseString = await response.Content.ReadAsStringAsync();
-            string balanceString = Regex.Match(responseString, "MainContentPlaceHolder_PointOfSalesMainContentPlaceHolder_BalanceText\"\\>(.*?)\\</span").Groups[1].Value;
-            label_Balance.Content = "Balance = " + balanceString;
+            //response = await client.GetAsync(rechrgeURL);
+            //responseString = await response.Content.ReadAsStringAsync();
+            //string balanceString = Regex.Match(responseString, "MainContentPlaceHolder_PointOfSalesMainContentPlaceHolder_BalanceText\"\\>(.*?)\\</span").Groups[1].Value;
+            //label_Balance.Content = "Balance = " + balanceString;
 
             button_Transfer.IsEnabled = true;
         }
@@ -172,6 +172,20 @@ namespace Syria_Transfer
                 t => t.Date.AddHours(-2).ToShortDateString().Equals(date.ToShortDateString())).Sum(d => d.Amount).ToString();
             labelMoney.Content = "Money = " + App.Transfers.Where(
                 t => t.Date.AddHours(-2).ToShortDateString().Equals(date.ToShortDateString())).Sum(d => d.Price).ToString();
+
+            if (date.ToShortDateString().Equals(DateTime.Now.AddHours(-2).ToShortDateString()))
+            {
+                labelTotalAmountSent.Content = "";
+                labelTotalMoney.Content = "";
+            }
+            else
+            {
+                DateTime date2 = new DateTime(date.Year, date.Month, date.Day, 2, 0, 0);
+                labelTotalAmountSent.Content = "SYP sent = " + App.Transfers.Where(
+                                t => t.Date < DateTime.Now && t.Date > date).Sum(d => d.Amount).ToString();
+                labelTotalMoney.Content = "Money = " + App.Transfers.Where(
+                                 t => t.Date < DateTime.Now && t.Date > date).Sum(d => d.Price).ToString();
+            }
         }
 
         async Task<bool> transferCredits(string number, string transferAmount)
@@ -259,16 +273,16 @@ namespace Syria_Transfer
                 textBox_Number.Text = build.ToString();
                 textBox_Number.TextChanged += textBox_Number_TextChanged;
             }
-            if (textBox_Number.Text.StartsWith("094") || textBox_Number.Text.StartsWith("095") || textBox_Number.Text.StartsWith("096"))
+            //if (textBox_Number.Text.StartsWith("094") || textBox_Number.Text.StartsWith("095") || textBox_Number.Text.StartsWith("096"))
             {
                 button_Transfer.Content = "Copy, Open Viber";
                 button_Transfer.Tag = TelCompany.MTN;
             }
-            else
-            {
-                button_Transfer.Content = "Transfer";
-                button_Transfer.Tag = TelCompany.Syriatel;
-            }
+            //else
+            //{
+            //    button_Transfer.Content = "Transfer";
+            //    button_Transfer.Tag = TelCompany.Syriatel;
+            //}
         }
 
         private void textBox_Amount_TextChanged(object sender, TextChangedEventArgs e)
