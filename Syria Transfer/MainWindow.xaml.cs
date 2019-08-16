@@ -32,7 +32,7 @@ namespace Syria_Transfer
 
         string viberLocation = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Viber\\Viber.exe";
 
-
+        string numberString;
         int transferAmount = 1000, price = 4000;
 
         int price200syp = 800;
@@ -93,7 +93,7 @@ namespace Syria_Transfer
 
         async private void button_Transfer_Click(object sender, RoutedEventArgs e)
         {
-            string numberString = textBox_Number.Text;
+            numberString = textBox_Number.Text;
 
 
             TelCompany com = (TelCompany)button_Transfer.Tag;
@@ -105,11 +105,7 @@ namespace Syria_Transfer
                 labelInfo.Content = string.Format("{0} SYP await to be sent by RIAD to {1}", transferAmount, numberString); ;
                 labelInfo.Foreground = Brushes.Green;
 
-                Transfer t = new Transfer(DateTime.Now, numberString, transferAmount, price);
-                App.Transfers.Insert(0, t);
-                Transfer.SaveTransfers();
-
-                updateSentDay(DateTime.Now.AddHours(-2));
+                addTransfer();
             }
             else
             {
@@ -154,15 +150,19 @@ namespace Syria_Transfer
 
                     labelInfo.Content = string.Format("{0} SYP transferred successfuly to {1}", transferAmount, numberString); ;
                     labelInfo.Foreground = Brushes.Green;
-
-                    Transfer.GetTransfers();
-                    Transfer t = new Transfer(DateTime.Now, numberString, transferAmount, price);
-                    App.Transfers.Insert(0, t);
-                    Transfer.SaveTransfers();
-
-                    updateSentDay(DateTime.Now.AddHours(-2));
+                    addTransfer();
                 }
             }
+        }
+
+        private void addTransfer()
+        {
+            Transfer.GetTransfers();
+            Transfer t = new Transfer(DateTime.Now, numberString, transferAmount, price);
+            App.Transfers.Insert(0, t);
+            Transfer.SaveTransfers();
+
+            updateSentDay(DateTime.Now.AddHours(-2));
         }
 
         void updateSentDay(DateTime date)
