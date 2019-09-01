@@ -18,7 +18,8 @@ namespace Syria_Transfer
     {
         public static List<Transfer> Transfers = new List<Transfer>();
         public static string transfersPath = @"D:\Dropbox\Text Files\SyriaTransfers.txt";
-        public static string Username, Password;
+        public static string Username, Password, ProxyAddress;
+        public static int ProxyPort;
 
 
         [DllImport("user32.dll")]
@@ -39,6 +40,8 @@ namespace Syria_Transfer
             string[] dataRes = File.ReadAllLines(pathRes);
             Username = dataRes[0];
             Password = dataRes[1];
+            ProxyAddress = dataRes[2];
+            ProxyPort = int.Parse(dataRes[3]);
 
             Transfer.GetTransfers();
         }

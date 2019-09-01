@@ -15,7 +15,7 @@
         <CheckBox x:Name="checkBox_Riad" Content="Riad" HorizontalAlignment="Left" Margin="332,348,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="textBox_Number" HorizontalAlignment="Left" Height="43" Margin="167,90,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" 
                  Width="183" HorizontalContentAlignment="center" VerticalContentAlignment="Center" FontSize="24" Text="Enter number" Foreground="blue"
-                 GotFocus="textbox_Focus" TextChanged="textBox_Number_TextChanged"/>
+                 GotFocus="textbox_Focus"/>
         <TextBox x:Name="textBox_Amount" HorizontalAlignment="Left" Height="41" Margin="183,148,0,0" TextWrapping="Wrap" Text="1000" FontSize="24"
                  VerticalAlignment="Top" Width="154" HorizontalContentAlignment="center" VerticalContentAlignment="Center" Background="LightGreen"
                  GotFocus="textbox_Focus"/>

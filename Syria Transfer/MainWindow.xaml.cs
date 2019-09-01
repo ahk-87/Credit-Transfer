@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -43,37 +44,112 @@ namespace Syria_Transfer
         {
             InitializeComponent();
             textBox_Amount.TextChanged += textBox_Amount_TextChanged;
+            textBox_Number.TextChanged += textBox_Number_TextChanged;
             textBox_Number.Focus();
         }
+
 
         async private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             updateSentDay(DateTime.Now.AddHours(-2));
 
+            WebProxy proxy = new WebProxy(App.ProxyAddress, App.ProxyPort);
+            proxy.BypassProxyOnLocal = false;
             handler = new HttpClientHandler();
+            handler.Proxy = proxy;
             client = new HttpClient(handler);
             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0");
             client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
             client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
             client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
 
-            //HttpResponseMessage response;
-            //string responseString;
-            //response = await client.GetAsync(loginURL);
-            //responseString = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response;
+            string responseString;
+            try
+            {
+                labelInfo.Content = string.Format("1st try, proxy = {0}:{1}", App.ProxyAddress, App.ProxyPort);
+                response = await client.GetAsync(loginURL);
+                responseString = await response.Content.ReadAsStringAsync();
+                labelInfo.Content = "Success from 1st try";
+            }
+            catch
+            {
+                responseString = "error";
+            }
 
-            //var values = extractValues(responseString);
-            //values.Add(new KeyValuePair<string, string>("UsernameTextBox", App.Username));
-            //values.Add(new KeyValuePair<string, string>("PasswordTextBox", App.Password));
-            //values.Add(new KeyValuePair<string, string>("SubmitButton", "Login"));
-            //FormUrlEncodedContent postLoginContent = new FormUrlEncodedContent(values);
+            if (responseString == "error")
+            {
+                labelInfo.Content = "2nd try, proxy = 82.137.244.73:8080";
+                proxy = new WebProxy("82.137.244.73", 8080);
+                proxy.BypassProxyOnLocal = false;
+                handler = new HttpClientHandler();
+                handler.Proxy = proxy;
+            }
 
-            //response = await client.PostAsync(loginURL, postLoginContent);
+            try
+            {
+                response = await client.GetAsync(loginURL);
+                responseString = await response.Content.ReadAsStringAsync();
+                labelInfo.Content = "Success from 2nd try";
+            }
+            catch
+            {
+                responseString = "error";
+            }
 
-            //response = await client.GetAsync(rechrgeURL);
-            //responseString = await response.Content.ReadAsStringAsync();
-            //string balanceString = Regex.Match(responseString, "MainContentPlaceHolder_PointOfSalesMainContentPlaceHolder_BalanceText\"\\>(.*?)\\</span").Groups[1].Value;
-            //label_Balance.Content = "Balance = " + balanceString;
+            if (responseString == "error")
+            {
+                labelInfo.Content = "3nd try, proxy = 185.151.151.166:3128";
+                proxy = new WebProxy("185.151.151.166", 3128);
+                proxy.BypassProxyOnLocal = false;
+                handler = new HttpClientHandler();
+                handler.Proxy = proxy;
+            }
+
+            try
+            {
+                response = await client.GetAsync(loginURL);
+                responseString = await response.Content.ReadAsStringAsync();
+                labelInfo.Content = "Success from 3rd try";
+            }
+            catch
+            {
+                responseString = "error";
+            }
+
+            if (responseString == "error")
+            {
+                labelInfo.Content = "4th try, proxy = 82.137.244.74:8080";
+                proxy = new WebProxy("82.137.244.74", 8080);
+                proxy.BypassProxyOnLocal = false;
+                handler = new HttpClientHandler();
+                handler.Proxy = proxy;
+            }
+
+            try
+            {
+                response = await client.GetAsync(loginURL);
+                responseString = await response.Content.ReadAsStringAsync();
+                labelInfo.Content = "Success from 4th try";
+            }
+            catch
+            {
+                labelInfo.Content = "error, you are loser!";
+                return;
+            }
+
+            var values = extractValues(responseString);
+            values.Add(new KeyValuePair<string, string>("UsernameTextBox", App.Username));
+            values.Add(new KeyValuePair<string, string>("PasswordTextBox", App.Password));
+            values.Add(new KeyValuePair<string, string>("SubmitButton", "Login"));
+            FormUrlEncodedContent postLoginContent = new FormUrlEncodedContent(values);
+
+            response = await client.PostAsync(loginURL, postLoginContent);
+
+            response = await client.GetAsync(rechrgeURL);
+            responseString = await response.Content.ReadAsStringAsync();
+            string balanceString = Regex.Match(responseString, "MainContentPlaceHolder_PointOfSalesMainContentPlaceHolder_BalanceText\"\\>(.*?)\\</span").Groups[1].Value;
+            label_Balance.Content = "Balance = " + balanceString;
 
             button_Transfer.IsEnabled = true;
         }
@@ -257,6 +333,7 @@ namespace Syria_Transfer
 
         private void textBox_Number_TextChanged(object sender, TextChangedEventArgs e)
         {
+            bool isSyriatel = true;
             if (textBox_Number.Text.Length > 0 && textBox_Number.Text[0] > 1600)
             {
                 StringBuilder build = new StringBuilder();
@@ -273,16 +350,24 @@ namespace Syria_Transfer
                 textBox_Number.Text = build.ToString();
                 textBox_Number.TextChanged += textBox_Number_TextChanged;
             }
-            //if (textBox_Number.Text.StartsWith("094") || textBox_Number.Text.StartsWith("095") || textBox_Number.Text.StartsWith("096"))
+            if (textBox_Number.Text.StartsWith("094") || textBox_Number.Text.StartsWith("095") || textBox_Number.Text.StartsWith("096"))
             {
                 button_Transfer.Content = "Copy, Open Viber";
                 button_Transfer.Tag = TelCompany.MTN;
+                button_Transfer.IsEnabled = true;
+                isSyriatel = false;
             }
-            //else
-            //{
-            //    button_Transfer.Content = "Transfer";
-            //    button_Transfer.Tag = TelCompany.Syriatel;
-            //}
+            else
+            {
+                button_Transfer.Content = "Transfer";
+                button_Transfer.Tag = TelCompany.Syriatel;
+                isSyriatel = true;
+            }
+
+            if (isSyriatel && label_Balance.Content as string == "Balance = ")
+            {
+                button_Transfer.IsEnabled = false;
+            }
         }
 
         private void textBox_Amount_TextChanged(object sender, TextChangedEventArgs e)
@@ -298,8 +383,8 @@ namespace Syria_Transfer
                 }
                 else if (transferAmount > 1000)
                 {
-                    //if (transferAmount == 2500)
-                    //    price200syp = 801;
+                    if (transferAmount == 2500)
+                        price200syp = 801;
                     //else if (transferAmount > 3000)
                     //    price200syp = 933;
                     button_Transfer.IsEnabled = true;
