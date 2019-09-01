@@ -58,6 +58,7 @@ namespace Syria_Transfer
             handler = new HttpClientHandler();
             handler.Proxy = proxy;
             client = new HttpClient(handler);
+            client.Timeout = new TimeSpan(0, 2, 0);
             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0");
             client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
             client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
@@ -73,7 +74,7 @@ namespace Syria_Transfer
                 labelInfo.Content = "Success from 1st try";
                 goto success;
             }
-            catch
+            catch (Exception ex)
             {
                 responseString = "error";
             }
@@ -101,8 +102,8 @@ namespace Syria_Transfer
 
             if (responseString == "error")
             {
-                labelInfo.Content = "3nd try, proxy = 185.151.151.166:3128";
-                proxy = new WebProxy("185.151.151.166", 3128);
+                labelInfo.Content = "3nd try, proxy = 82.137.244.73:8080";
+                proxy = new WebProxy("82.137.244.73", 8080);
                 proxy.BypassProxyOnLocal = false;
                 handler = new HttpClientHandler();
                 handler.Proxy = proxy;
