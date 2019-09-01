@@ -71,6 +71,7 @@ namespace Syria_Transfer
                 response = await client.GetAsync(loginURL);
                 responseString = await response.Content.ReadAsStringAsync();
                 labelInfo.Content = "Success from 1st try";
+                goto success;
             }
             catch
             {
@@ -91,6 +92,7 @@ namespace Syria_Transfer
                 response = await client.GetAsync(loginURL);
                 responseString = await response.Content.ReadAsStringAsync();
                 labelInfo.Content = "Success from 2nd try";
+                goto success;
             }
             catch
             {
@@ -111,6 +113,7 @@ namespace Syria_Transfer
                 response = await client.GetAsync(loginURL);
                 responseString = await response.Content.ReadAsStringAsync();
                 labelInfo.Content = "Success from 3rd try";
+                goto success;
             }
             catch
             {
@@ -138,6 +141,7 @@ namespace Syria_Transfer
                 return;
             }
 
+            success:
             var values = extractValues(responseString);
             values.Add(new KeyValuePair<string, string>("UsernameTextBox", App.Username));
             values.Add(new KeyValuePair<string, string>("PasswordTextBox", App.Password));
