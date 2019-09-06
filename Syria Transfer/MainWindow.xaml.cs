@@ -142,7 +142,7 @@ namespace Syria_Transfer
                 return;
             }
 
-            success:
+        success:
             var values = extractValues(responseString);
             values.Add(new KeyValuePair<string, string>("UsernameTextBox", App.Username));
             values.Add(new KeyValuePair<string, string>("PasswordTextBox", App.Password));
@@ -263,9 +263,9 @@ namespace Syria_Transfer
             {
                 DateTime date2 = new DateTime(date.Year, date.Month, date.Day, 2, 0, 0);
                 labelTotalAmountSent.Content = "SYP sent = " + App.Transfers.Where(
-                                t => t.Date < DateTime.Now && t.Date > date).Sum(d => d.Amount).ToString();
+                                t => t.Date < DateTime.Now && t.Date > date2).Sum(d => d.Amount).ToString();
                 labelTotalMoney.Content = "Money = " + App.Transfers.Where(
-                                 t => t.Date < DateTime.Now && t.Date > date).Sum(d => d.Price).ToString();
+                                 t => t.Date < DateTime.Now && t.Date > date2).Sum(d => d.Price).ToString();
             }
         }
 
@@ -289,6 +289,15 @@ namespace Syria_Transfer
 
             response = await client.PostAsync(rechrgeURL, postLoginContent);
             responseString = await response.Content.ReadAsStringAsync();
+
+            try
+            {
+                File.WriteAllText(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) +
+                    string.Format("\\Syria Logs\\{0}-{1:00}-{2:00} {3}-{4}-{5}.html", DateTime.Now.Year, DateTime.Now.Day, DateTime.Now.Month,
+                    DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second), responseString);
+            }
+            catch { }
+
             if (!responseString.Contains("successfully"))
             {
                 string error = Regex.Match(responseString, "style=\"color:Red;\">(.*?)</span").Groups[1].Value;
@@ -339,10 +348,11 @@ namespace Syria_Transfer
         private void textBox_Number_TextChanged(object sender, TextChangedEventArgs e)
         {
             bool isSyriatel = true;
-            if (textBox_Number.Text.Length > 0 && textBox_Number.Text[0] > 1600)
+            string query = textBox_Number.Text;
+            if (query.Length > 0 && query[0] > 1600)
             {
                 StringBuilder build = new StringBuilder();
-                foreach (char c in textBox_Number.Text)
+                foreach (char c in query)
                 {
                     if (c > 1600)
                         build.Append(char.ConvertFromUtf32(c - 1584));
@@ -351,11 +361,20 @@ namespace Syria_Transfer
                 }
                 if (build[0] != '0')
                     build.Insert(0, '0');
-                textBox_Number.TextChanged -= textBox_Number_TextChanged;
-                textBox_Number.Text = build.ToString();
-                textBox_Number.TextChanged += textBox_Number_TextChanged;
+                query = build.ToString();
             }
-            if (textBox_Number.Text.StartsWith("094") || textBox_Number.Text.StartsWith("095") || textBox_Number.Text.StartsWith("096"))
+            if (query.Contains(" "))
+            {
+                query = query.Replace(" ", "").TrimStart(new char[] { '+' });
+                if (query.StartsWith("963"))
+                    query = "0" + query.Remove(0, 3);
+            }
+
+            textBox_Number.TextChanged -= textBox_Number_TextChanged;
+            textBox_Number.Text = query;
+            textBox_Number.TextChanged += textBox_Number_TextChanged;
+
+            if (query.StartsWith("094") || query.StartsWith("095") || query.StartsWith("096"))
             {
                 button_Transfer.Content = "Copy, Open Viber";
                 button_Transfer.Tag = TelCompany.MTN;
