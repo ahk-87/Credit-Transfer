@@ -483,19 +483,25 @@ namespace Syria_Transfer
             price200syp = 800;
             if (int.TryParse(textBox_Amount.Text, out transferAmount))
             {
-                textBox_Amount.Background = Brushes.LightGreen;
                 if (transferAmount > 5000)
                 {
                     price200syp = 0;
                     button_Transfer.IsEnabled = false;
                     textBox_Amount.Background = Brushes.Red;
                 }
-                else if (transferAmount > 1000)
+                else
                 {
-                    if (transferAmount == 2500)
-                        price200syp = 800;
-                    //else if (transferAmount > 3000)
-                    //    price200syp = 933;
+                    if (transferAmount > 1000)
+                    {
+                        textBox_Amount.Background = Brushes.LightYellow;
+                        //if (transferAmount == 2500)
+                        //    price200syp = 800;
+                        //else if (transferAmount > 3000)
+                        //    price200syp = 933;
+                    }
+                    else
+                        textBox_Amount.Background = Brushes.LightGreen;
+
                     if (!isSyriatel)
                         button_Transfer.IsEnabled = true;
                     else
@@ -505,7 +511,6 @@ namespace Syria_Transfer
                         else
                             button_Transfer.IsEnabled = false;
                     }
-                    textBox_Amount.Background = Brushes.LightYellow;
                 }
 
                 double priceCorrection = transferAmount / 200.0 * price200syp;
