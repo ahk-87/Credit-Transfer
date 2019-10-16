@@ -34,6 +34,8 @@
         <Label x:Name="labelMoney" Content="Label" HorizontalAlignment="Left" Margin="268,256,0,0" VerticalAlignment="Top" Foreground="#FFC704FF" FontSize="14" FontFamily="YouYuan"/>
         <Label x:Name="labelTotalMoney" Content="" HorizontalAlignment="Left" Margin="268,286,0,0" VerticalAlignment="Top" Foreground="#FF0419FF" FontSize="14" FontFamily="YouYuan"/>
         <Label x:Name="labelOldBalance" Content="" HorizontalAlignment="Left" Margin="134,9,0,0" VerticalAlignment="Top"/>
+        <TextBlock x:Name="textOldBalance" HorizontalAlignment="Left" Height="23" Margin="331,9,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="57"/>
+        <TextBlock x:Name="textNewBalance" HorizontalAlignment="Left" Height="23" Margin="331,37,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="57"/>
 
 
     </Grid>
