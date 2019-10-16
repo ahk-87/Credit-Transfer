@@ -189,7 +189,8 @@ namespace Syria_Transfer
             textOldBalance.Text = oldBalance.ToString();
 
             balanceOK = true;
-            button_Transfer.IsEnabled = true;
+            if (isSyriatel)
+                button_Transfer.IsEnabled = true;
         }
 
         private void Wb_Navigated(object sender, NavigationEventArgs e)
@@ -300,7 +301,7 @@ namespace Syria_Transfer
                             double priceCorrection = transferAmount / 200.0 * price200syp;
                             priceCorrection = priceCorrection / 500;
                             price = (int)(Math.Ceiling(priceCorrection) * 500);
-                            labelInfo.Content = string.Format("Only {0} SYP transferred to {1}, remaining {2}", 
+                            labelInfo.Content = string.Format("Only {0} SYP transferred to {1}, remaining {2}",
                                 transferAmount, numberString, remainingAmount);
                             labelInfo.Foreground = Brushes.OrangeRed;
                             addTransfer();
@@ -428,9 +429,9 @@ namespace Syria_Transfer
         }
 
 
+        bool isSyriatel = true;
         private void textBox_Number_TextChanged(object sender, TextChangedEventArgs e)
         {
-            bool isSyriatel = true;
             string query = textBox_Number.Text;
             if (query.Length > 0 && query[0] > 1600)
             {
@@ -495,10 +496,15 @@ namespace Syria_Transfer
                         price200syp = 800;
                     //else if (transferAmount > 3000)
                     //    price200syp = 933;
-                    if (balanceOK)
+                    if (!isSyriatel)
                         button_Transfer.IsEnabled = true;
                     else
-                        button_Transfer.IsEnabled = false;
+                    {
+                        if (balanceOK)
+                            button_Transfer.IsEnabled = true;
+                        else
+                            button_Transfer.IsEnabled = false;
+                    }
                     textBox_Amount.Background = Brushes.LightYellow;
                 }
 
