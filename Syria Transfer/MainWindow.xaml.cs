@@ -186,6 +186,7 @@ namespace Syria_Transfer
             string balanceString = Regex.Match(responseString, "MainContentPlaceHolder_PointOfSalesMainContentPlaceHolder_BalanceText\"\\>(.*?)\\</span").Groups[1].Value;
             label_Balance.Content = "Balance = " + balanceString;
             oldBalance = int.Parse(balanceString, NumberStyles.AllowThousands);
+            newBalance = oldBalance;
             textOldBalance.Text = oldBalance.ToString();
 
             balanceOK = true;
@@ -376,8 +377,15 @@ namespace Syria_Transfer
             values.Add(new KeyValuePair<string, string>("ctl00$ctl00$MainContentPlaceHolder$PointOfSalesMainContentPlaceHolder$RechargeSubmitButton", "Recharge"));
             FormUrlEncodedContent postLoginContent = new FormUrlEncodedContent(values);
 
-            response = await clientSyriatel.PostAsync(rechrgeURL, postLoginContent);
-            responseString = await response.Content.ReadAsStringAsync();
+            try
+            {
+                response = await clientSyriatel.PostAsync(rechrgeURL, postLoginContent);
+                responseString = await response.Content.ReadAsStringAsync();
+            }
+            catch
+            {
+
+            }
 
             try
             {
