@@ -36,13 +36,14 @@ namespace Syria_Transfer
         string post1 = "7|0|5|https://services.mtn.com.sy:8443/agentportal/agentportal/|6B44B0C517CC73B42098F57E34D88759|com.seamless.ers.client.agentPortal.client.common.AgentPortalService|getLoggedinAgent|java.lang.String/2004016611|1|2|3|4|1|5|0|";
 
         //string viberLocation = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Viber\\Viber.exe";
+        string firefoxLocation = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles) + "\\Mozilla Firefox\\firefox.exe";
 
         bool balanceOK = false;
         string errorMessage = "";
         string numberString;
-        int transferAmount = 1000, price = 4000;
 
         int price200syp = 800;
+        int transferAmount = 1000, price = 4000;
         int oldBalance, newBalance;
 
         HttpClient clientSyriatel, clientMTN;
@@ -50,6 +51,8 @@ namespace Syria_Transfer
         public MainWindow()
         {
             InitializeComponent();
+
+            labelPrice.Content = price200syp * 5;
 
             textBox_Amount.TextChanged += textBox_Amount_TextChanged;
             textBox_Number.TextChanged += textBox_Number_TextChanged;
@@ -229,6 +232,15 @@ namespace Syria_Transfer
                     Clipboard.SetText(numberString);
                     //Process.Start(viberLocation);
                     labelInfo.Content = string.Format("{0} SYP await to be sent by MTN to {1}", transferAmount, numberString); ;
+                    labelInfo.Foreground = Brushes.Green;
+
+                    addTransfer();
+                }
+                else if (transferAmount >= 1500)
+                {
+                    button_Transfer.IsEnabled = false;
+                    Clipboard.SetText(string.Format("{0}\r\n\r\n{1} وحدة", numberString, transferAmount));
+                    labelInfo.Content = string.Format("{0} SYP await to be sent by riad to {1}", transferAmount, numberString); ;
                     labelInfo.Foreground = Brushes.Green;
 
                     addTransfer();
@@ -468,20 +480,28 @@ namespace Syria_Transfer
 
             if (query.StartsWith("094") || query.StartsWith("095") || query.StartsWith("096"))
             {
-                button_Transfer.Content = "Copy, Open Viber";
+                button_Transfer.Content = "Copy Number MTN";
                 button_Transfer.Tag = TelCompany.MTN;
                 button_Transfer.IsEnabled = true;
                 isSyriatel = false;
             }
             else
             {
-                button_Transfer.Content = "Transfer";
                 button_Transfer.Tag = TelCompany.Syriatel;
                 isSyriatel = true;
-                if (balanceOK)
+                if (transferAmount >= 1500)
+                {
+                    button_Transfer.Content = "Copy, open firefox";
                     button_Transfer.IsEnabled = true;
+                }
                 else
-                    button_Transfer.IsEnabled = false;
+                {
+                    button_Transfer.Content = "Transfer";
+                    if (balanceOK)
+                        button_Transfer.IsEnabled = true;
+                    else
+                        button_Transfer.IsEnabled = false;
+                }
 
             }
         }
@@ -512,8 +532,14 @@ namespace Syria_Transfer
 
                     if (!isSyriatel)
                         button_Transfer.IsEnabled = true;
+                    else if (transferAmount >= 1500)
+                    {
+                        button_Transfer.IsEnabled = true;
+                        button_Transfer.Content = "Copy, open Firefox";
+                    }
                     else
                     {
+                        button_Transfer.Content = "Transfer";
                         if (balanceOK)
                             button_Transfer.IsEnabled = true;
                         else
@@ -532,6 +558,11 @@ namespace Syria_Transfer
                 button_Transfer.IsEnabled = false;
                 textBox_Amount.Background = Brushes.Red;
             }
+        }
+
+        void checkNumberAmount()
+        {
+            
         }
     }
 
