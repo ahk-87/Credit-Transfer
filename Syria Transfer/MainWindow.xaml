@@ -5,17 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Syria_Transfer"
         mc:Ignorable="d" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen"
-        Title="Syriatel Balance Transfer" Height="475.381" Width="404.629">
+        Title="Syriatel Balance Transfer" Height="475.381" Width="643.479">
     <Grid>
         <Button x:Name="button_Transfer" Content="Transfer" HorizontalAlignment="Left" Height="45" Margin="109,333,0,0" VerticalAlignment="Top" 
                 Width="192" Click="button_Transfer_Click" FontSize="18" IsDefault="True" IsEnabled="False"/>
         <TextBlock  Text="Number" HorizontalAlignment="Left" Margin="49,104,0,0" VerticalAlignment="Top"/>
         <TextBlock  Text="Amount" HorizontalAlignment="Left" Margin="49,160,0,0" VerticalAlignment="Top"/>
         <TextBlock  Text="Price" HorizontalAlignment="Left" Margin="60,214,0,0" VerticalAlignment="Top"/>
-        <CheckBox x:Name="checkBox_Riad" Content="Riad" HorizontalAlignment="Left" Margin="332,348,0,0" VerticalAlignment="Top"/>
+        <TextBox  Name="textRiadLimit" Text="1500" HorizontalAlignment="Left" Margin="317,348,0,0" VerticalAlignment="Top" 
+                  />
+
         <TextBox x:Name="textBox_Number" HorizontalAlignment="Left" Height="43" Margin="167,90,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" 
                  Width="183" HorizontalContentAlignment="center" VerticalContentAlignment="Center" FontSize="24" Text="Enter number" Foreground="blue"
-                 GotFocus="textbox_Focus"/>
+                 GotFocus="textbox_Focus" PreviewMouseLeftButtonDown="textBox_Number_MouseLeftButtonUp"/>
         <TextBox x:Name="textBox_Amount" HorizontalAlignment="Left" Height="41" Margin="183,148,0,0" TextWrapping="Wrap" Text="1000" FontSize="24"
                  VerticalAlignment="Top" Width="154" HorizontalContentAlignment="center" VerticalContentAlignment="Center" Background="LightGreen"
                  GotFocus="textbox_Focus"/>
@@ -23,7 +25,7 @@
                FontSize="26" FontFamily="MS Gothic" Foreground="DarkKhaki"/>
         <Label x:Name="label_Transfers" Content="Transfers" HorizontalAlignment="Left" Margin="0,335,0,0" VerticalAlignment="Top"
                FontSize="16" FontFamily="Segoe Print" Cursor="Hand" MouseLeftButtonUp="TextBlock_MouseUp"/>
-        <Label x:Name="labelInfo" Content="info" HorizontalAlignment="Stretch" Margin="10,383,9.4,0" VerticalAlignment="Top" HorizontalContentAlignment="Center"
+        <Label x:Name="labelInfo" Content="info" HorizontalAlignment="Stretch" Margin="10,383,248.8,0" VerticalAlignment="Top" HorizontalContentAlignment="Center"
                Foreground="Black" FontFamily="Poor Richard" FontSize="16"/>
         <Label x:Name="labelPrice" Content="4000" HorizontalAlignment="Left" Margin="183,199,0,0" VerticalAlignment="Top" Width="154" Height="42"
                HorizontalContentAlignment="Center" FontSize="24" BorderThickness="1" BorderBrush="Black"/>
@@ -36,6 +38,53 @@
         <Label x:Name="labelOldBalance" Content="" HorizontalAlignment="Left" Margin="134,9,0,0" VerticalAlignment="Top"/>
         <TextBlock x:Name="textOldBalance" HorizontalAlignment="Left" Height="23" Margin="331,9,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="57"/>
         <TextBlock x:Name="textNewBalance" HorizontalAlignment="Left" Height="23" Margin="331,37,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="57"/>
+        <Button x:Name="button" Content="cancek" HorizontalAlignment="Left" Margin="312,380,0,0" VerticalAlignment="Top" Width="35" 
+                Click="button_Click" Visibility="Hidden"/>
+        <Button x:Name="button1" Content="OK" HorizontalAlignment="Left" Margin="359,380,0,0" VerticalAlignment="Top" Width="24" Click="button1_Click"
+                Visibility="Hidden"/>
+        <ListBox x:Name="listBox" HorizontalAlignment="Left" Height="151" Margin="384,90,0,0" VerticalAlignment="Top" Width="219"
+                 SelectionChanged="listBox_SelectionChanged">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Path=Date,StringFormat=dd-MM-yy}" Width="70"/>
+                        <TextBlock Text="{Binding Path=Number}" Width="90"/>
+                        <TextBlock Text="{Binding Path=Amount}"/>
+                    </StackPanel>
+
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Label Content="Numbers not transferred" HorizontalAlignment="Left" Margin="393,59,0,0" VerticalAlignment="Top"/>
+        
+        <Grid VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,9.8,33.6">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="80"/>
+            </Grid.ColumnDefinitions>
+            <DatePicker Name="datePicker" HorizontalAlignment="Center"  VerticalAlignment="Center" Grid.ColumnSpan="4" Margin="5"
+                        />
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="SYP sent" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Margin="5"/>
+            <Label x:Name="labelRiadSYPSent" Content="Label" HorizontalAlignment="Stretch" VerticalAlignment="Top"  Margin="5"
+                   Grid.Row="1" Grid.Column="1" HorizontalContentAlignment="Center" MouseDoubleClick="labelRiadSYPSent_MouseDoubleClick" Cursor="Hand" Background="#FFD8D92A"/>
+            <TextBlock HorizontalAlignment="Left"  TextWrapping="Wrap" Text="Money" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" Margin="5"/>
+            <Label x:Name="labelRiadMoney1" Content="Label" HorizontalAlignment="Stretch"   VerticalAlignment="Top" Background="#7FF70000" Margin="5"
+                   Grid.Row="1" Grid.Column="3" HorizontalContentAlignment="Center"/>
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="Cost" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2" Margin="5"/>
+            <Label x:Name="labelRiadMoney2" Content="Label" HorizontalAlignment="Stretch"  VerticalAlignment="Top" Background="#7FF70000" Margin="5"
+                   Grid.Row="2" Grid.Column="3" HorizontalContentAlignment="Center"/>
+            <TextBlock HorizontalAlignment="Left"  TextWrapping="Wrap" Text="Profit" VerticalAlignment="Center" Grid.Row="3" Grid.Column="2" Margin="5"/>
+            <Label x:Name="labelRiadProfit" Content="Label" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="#7F56F700" Margin="5"
+                   Grid.Row="3" Grid.Column="3" HorizontalContentAlignment="Center"/>
+        </Grid>
 
 
     </Grid>

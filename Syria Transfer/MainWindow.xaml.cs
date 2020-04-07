@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -27,6 +30,7 @@ namespace Syria_Transfer
     /// </summary>
     public partial class MainWindow : Window
     {
+        string settingsLoc = "settings.txt";
 
         string loginURL = "https://abili.syriatel.com.sy/Login.aspx";
         string rechrgeURL = "https://abili.syriatel.com.sy/Recharge.aspx";
@@ -45,18 +49,50 @@ namespace Syria_Transfer
         int price200syp = 800;
         int transferAmount = 1000, price = 4000;
         int oldBalance, newBalance;
+        int riadLimit = 1500;
+        DateTime riadDateCalculation;
+
+        int selectedIndex = -1;
+
 
         HttpClient clientSyriatel, clientMTN;
         HttpClientHandler handlersyriatel, handlerMTN;
+        List<string> addresses = new List<string>();
+        List<string> ranks = new List<string>() { "1st", "2nd", "3rd", "4th", "5th", "6th" };
         public MainWindow()
         {
             InitializeComponent();
+
+            if (File.Exists(settingsLoc))
+            {
+                var lines = File.ReadAllLines(settingsLoc);
+                riadLimit = int.Parse(lines[0]);
+                riadDateCalculation = DateTime.Parse(lines[1]);
+                string[] tempAddresses = lines[2].Split(new char[] { ',' });
+                addresses.AddRange(tempAddresses);
+            }
+            else
+            {
+                riadDateCalculation = DateTime.Now.AddDays(-1);
+                addresses.Add("82.137.244.151:8080");
+                File.Create(settingsLoc).Close();
+                saveData();
+            };
+
+            datePicker.SelectedDate = riadDateCalculation;
+            datePicker.SelectedDateChanged += datePicker_SelectedDateChanged;
+            datePicker.DisplayDateEnd = DateTime.Today;
+            updateRiadParameters();
+            textRiadLimit.Text = riadLimit.ToString();
+            textRiadLimit.TextChanged += textRiadLimit_TextChanged;
 
             labelPrice.Content = price200syp * 5;
 
             textBox_Amount.TextChanged += textBox_Amount_TextChanged;
             textBox_Number.TextChanged += textBox_Number_TextChanged;
             textBox_Number.Focus();
+
+            listBox.ItemsSource = App.NumbersNotTransferred;
         }
 
 
@@ -86,96 +122,53 @@ namespace Syria_Transfer
             //HttpResponseMessage response1 = await clientMTN.GetAsync(Url1);
             //string s = await response1.Content.ReadAsStringAsync();
 
-            WebProxy proxy = new WebProxy(App.ProxyAddress, App.ProxyPort);
-            proxy.BypassProxyOnLocal = false;
-            handlersyriatel = new HttpClientHandler();
-            handlersyriatel.Proxy = proxy;
-            clientSyriatel = new HttpClient(handlersyriatel);
-            clientSyriatel.Timeout = new TimeSpan(0, 2, 0);
-            clientSyriatel.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0");
-            clientSyriatel.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-            clientSyriatel.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
-            clientSyriatel.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
-
+            string responseString = "";
             HttpResponseMessage response;
-            string responseString;
-            try
-            {
-                labelInfo.Content = string.Format("1st try, proxy = {0}:{1}", App.ProxyAddress, App.ProxyPort);
-                response = await clientSyriatel.GetAsync(loginURL);
-                responseString = await response.Content.ReadAsStringAsync();
-                labelInfo.Content = "Success from 1st try";
-                goto success;
-            }
-            catch (Exception ex)
-            {
-                responseString = "error";
-            }
 
-            if (responseString == "error")
+            for (int i = 0; i < addresses.Count; i++)
             {
-                labelInfo.Content = "2nd try, proxy = 82.137.244.73:8080";
-                proxy = new WebProxy("82.137.244.73", 8080);
+                string[] addressSplit = addresses[i].Split(new char[] { ':' });
+                string proxyAddress = addressSplit[0];
+                int proxyPort = int.Parse(addressSplit[1]);
+                WebProxy proxy = new WebProxy(proxyAddress, proxyPort);
                 proxy.BypassProxyOnLocal = false;
                 handlersyriatel = new HttpClientHandler();
                 handlersyriatel.Proxy = proxy;
+                clientSyriatel = new HttpClient(handlersyriatel);
+                clientSyriatel.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0");
+                clientSyriatel.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+                clientSyriatel.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
+                clientSyriatel.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+
+                try
+                {
+                    labelInfo.Foreground = Brushes.Black;
+                    labelInfo.Content = string.Format("{0} try, proxy = {1}:{2}", ranks[i], proxyAddress, proxyPort);
+
+                    checkNumberBalance();
+
+                    response = await clientSyriatel.GetAsync(loginURL);
+                    responseString = await response.Content.ReadAsStringAsync();
+                    labelInfo.Foreground = Brushes.Black;
+                    labelInfo.Content = "Success from " + ranks[i] + " try";
+                    SystemSounds.Asterisk.Play();
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    responseString = "error";
+                }
             }
 
-            try
-            {
-                response = await clientSyriatel.GetAsync(loginURL);
-                responseString = await response.Content.ReadAsStringAsync();
-                labelInfo.Content = "Success from 2nd try";
-                goto success;
-            }
-            catch
-            {
-                responseString = "error";
-            }
-
+            checkNumberBalance();
             if (responseString == "error")
             {
-                labelInfo.Content = "3rd try, proxy = 82.137.244.73:8080";
-                proxy = new WebProxy("82.137.244.73", 8080);
-                proxy.BypassProxyOnLocal = false;
-                handlersyriatel = new HttpClientHandler();
-                handlersyriatel.Proxy = proxy;
-            }
-
-            try
-            {
-                response = await clientSyriatel.GetAsync(loginURL);
-                responseString = await response.Content.ReadAsStringAsync();
-                labelInfo.Content = "Success from 3rd try";
-                goto success;
-            }
-            catch
-            {
-                responseString = "error";
-            }
-
-            if (responseString == "error")
-            {
-                labelInfo.Content = "4th try, proxy = 82.137.244.74:8080";
-                proxy = new WebProxy("82.137.244.74", 8080);
-                proxy.BypassProxyOnLocal = false;
-                handlersyriatel = new HttpClientHandler();
-                handlersyriatel.Proxy = proxy;
-            }
-
-            try
-            {
-                response = await clientSyriatel.GetAsync(loginURL);
-                responseString = await response.Content.ReadAsStringAsync();
-                labelInfo.Content = "Success from 4th try";
-            }
-            catch
-            {
+                labelInfo.Foreground = Brushes.Red;
                 labelInfo.Content = "error, you are loser!";
+                SystemSounds.Hand.Play();
                 return;
             }
 
-        success:
             var values = extractValues(responseString);
             values.Add(new KeyValuePair<string, string>("UsernameTextBox", App.Username));
             values.Add(new KeyValuePair<string, string>("PasswordTextBox", App.Password));
@@ -186,6 +179,16 @@ namespace Syria_Transfer
 
             response = await clientSyriatel.GetAsync(rechrgeURL);
             responseString = await response.Content.ReadAsStringAsync();
+
+
+            if (responseString.Contains("newPasswordText"))
+            {
+                labelInfo.Content = "PASSWORD need to be changed";
+                labelInfo.Foreground = Brushes.Red;
+                return;
+            }
+
+
             string balanceString = Regex.Match(responseString, "MainContentPlaceHolder_PointOfSalesMainContentPlaceHolder_BalanceText\"\\>(.*?)\\</span").Groups[1].Value;
             label_Balance.Content = "Balance = " + balanceString;
             oldBalance = int.Parse(balanceString, NumberStyles.AllowThousands);
@@ -193,8 +196,32 @@ namespace Syria_Transfer
             textOldBalance.Text = oldBalance.ToString();
 
             balanceOK = true;
+
             if (isSyriatel)
-                button_Transfer.IsEnabled = true;
+                button_Transfer.IsEnabled = checkNumber();
+        }
+
+        void checkNumberBalance()
+        {
+            int balance = int.Parse(textBox_Amount.Text);
+            if (checkNumber() && isSyriatel)
+            {
+                if (selectedIndex == -1 && balance < riadLimit)
+                {
+                    Transfer t = new Transfer(DateTime.Now, textBox_Number.Text, int.Parse(textBox_Amount.Text), 0);
+                    App.NumbersNotTransferred.Insert(0, t);
+                    selectedIndex = 0;
+                    Transfer.SaveTransfers();
+                }
+                else
+                {
+                    if (App.NumbersNotTransferred[selectedIndex].Amount != transferAmount)
+                    {
+                        App.NumbersNotTransferred[selectedIndex].Amount = transferAmount;
+                        Transfer.SaveTransfers();
+                    }
+                }
+            }
         }
 
         private void Wb_Navigated(object sender, NavigationEventArgs e)
@@ -236,7 +263,7 @@ namespace Syria_Transfer
 
                     addTransfer();
                 }
-                else if (transferAmount >= 1500)
+                else if (transferAmount >= riadLimit)
                 {
                     button_Transfer.IsEnabled = false;
                     Clipboard.SetText(string.Format("{0}\r\n\r\n{1} وحدة", numberString, transferAmount));
@@ -305,6 +332,21 @@ namespace Syria_Transfer
                             labelInfo.Content = string.Format("Nothing transferred :( "); ;
                             labelInfo.Foreground = Brushes.Red;
 
+                            if (selectedIndex == -1)
+                            {
+                                App.NumbersNotTransferred.Insert(0, new Transfer(DateTime.Now, numberString, transferAmount, 0));
+                                Transfer.SaveTransfers();
+                                selectedIndex = 0;
+                            }
+                            else
+                            {
+                                if (App.NumbersNotTransferred[selectedIndex].Amount != transferAmount)
+                                {
+                                    App.NumbersNotTransferred[selectedIndex].Amount = transferAmount;
+                                    Transfer.SaveTransfers();
+                                }
+                            }
+
                             button_Transfer.IsEnabled = true;
                         }
                         else if (amountTransferred < transferAmount)
@@ -320,6 +362,18 @@ namespace Syria_Transfer
                             addTransfer();
                             textBox_Amount.Text = remainingAmount.ToString();
                             oldBalance = newBalance;
+
+                            if (selectedIndex != -1)
+                            {
+                                App.NumbersNotTransferred[selectedIndex].Amount = remainingAmount;
+                                Transfer.SaveTransfers();
+                            }
+                            else
+                            {
+                                App.NumbersNotTransferred.Insert(0, new Transfer(DateTime.Now, numberString, remainingAmount, 0));
+                                Transfer.SaveTransfers();
+                                selectedIndex = 0;
+                            }
                         }
                         else
                         {
@@ -340,20 +394,41 @@ namespace Syria_Transfer
 
         private void addTransfer()
         {
-            Transfer.GetTransfers();
+            if (selectedIndex != -1)
+            {
+                App.NumbersNotTransferred.RemoveAt(selectedIndex);
+                selectedIndex = -1;
+            }
+
+            //Transfer.GetTransfers();
             Transfer t = new Transfer(DateTime.Now, numberString, transferAmount, price);
-            App.Transfers.Insert(0, t);
+            t.Status = TransferStatus.Transferred;
+            App.NumbersTransferred.Insert(0, t);
             Transfer.SaveTransfers();
 
             updateSentDay(DateTime.Now.AddHours(-2));
+            updateRiadParameters();
+        }
+
+        void updateRiadParameters()
+        {
+            DateTime dd = DateTime.Today;
+            if (riadDateCalculation == DateTime.Today || DateTime.Now.Hour > 21)
+                dd = DateTime.Now;
+            var transfers = App.NumbersTransferred.Where(
+                t => t.Date.AddHours(-2) > riadDateCalculation && t.Date.AddHours(-2) < dd);
+            labelRiadSYPSent.Content = transfers.Sum(d => d.Amount).ToString();
+            labelRiadMoney1.Content = transfers.Sum(d => d.Price).ToString();
+            labelRiadMoney2.Content = (Math.Ceiling((transfers.Sum(d => d.Amount) * 3.5 / 250)) * 250).ToString();
+            labelRiadProfit.Content = (int.Parse(labelRiadMoney1.Content.ToString()) - int.Parse(labelRiadMoney2.Content.ToString())).ToString();
         }
 
         void updateSentDay(DateTime date)
         {
             labelDate.Content = date.ToString("dd-MM-yyyy");
-            labelAmountSent.Content = "SYP sent = " + App.Transfers.Where(
+            labelAmountSent.Content = "SYP sent = " + App.NumbersTransferred.Where(
                 t => t.Date.AddHours(-2).ToShortDateString().Equals(date.ToShortDateString())).Sum(d => d.Amount).ToString();
-            labelMoney.Content = "Money = " + App.Transfers.Where(
+            labelMoney.Content = "Money = " + App.NumbersTransferred.Where(
                 t => t.Date.AddHours(-2).ToShortDateString().Equals(date.ToShortDateString())).Sum(d => d.Price).ToString();
 
             if (date.ToShortDateString().Equals(DateTime.Now.AddHours(-2).ToShortDateString()))
@@ -364,9 +439,9 @@ namespace Syria_Transfer
             else
             {
                 DateTime date2 = new DateTime(date.Year, date.Month, date.Day, 2, 0, 0);
-                labelTotalAmountSent.Content = "SYP sent = " + App.Transfers.Where(
+                labelTotalAmountSent.Content = "SYP sent = " + App.NumbersTransferred.Where(
                                 t => t.Date < DateTime.Now && t.Date > date2).Sum(d => d.Amount).ToString();
-                labelTotalMoney.Content = "Money = " + App.Transfers.Where(
+                labelTotalMoney.Content = "Money = " + App.NumbersTransferred.Where(
                                  t => t.Date < DateTime.Now && t.Date > date2).Sum(d => d.Price).ToString();
             }
         }
@@ -448,10 +523,85 @@ namespace Syria_Transfer
             updateSentDay(date.AddDays(1));
         }
 
+        #region RiadLimit
+        private void button_Click(object sender, RoutedEventArgs e)
+        {
+            textRiadLimit.Text = riadLimit.ToString();
+            button.Visibility = Visibility.Hidden;
+            button1.Visibility = Visibility.Hidden;
+        }
+
+        private void button1_Click(object sender, RoutedEventArgs e)
+        {
+            riadLimit = int.Parse(textRiadLimit.Text);
+            saveData();
+            textBox_Amount_TextChanged(null, null);
+            button.Visibility = Visibility.Hidden;
+            button1.Visibility = Visibility.Hidden;
+        }
+
+        private void textRiadLimit_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            int limit = riadLimit;
+            if (!int.TryParse(textRiadLimit.Text, out limit))
+            {
+                textRiadLimit.TextChanged -= textRiadLimit_TextChanged;
+                textRiadLimit.Text = riadLimit.ToString();
+                textRiadLimit.TextChanged += textRiadLimit_TextChanged;
+                return;
+            }
+
+            button.Visibility = Visibility.Visible;
+            button1.Visibility = Visibility.Visible;
+        }
+
+        void saveData()
+        {
+            string sss = "";
+            foreach (string s in addresses)
+            {
+                sss += s + ",";
+            }
+            sss = sss.Remove(sss.Length - 1);
+            File.WriteAllText(settingsLoc, textRiadLimit.Text + "\r\n" + riadDateCalculation.ToShortDateString() + "\r\n" + sss);
+        }
+        #endregion
 
         bool isSyriatel = true;
+
+        private void listBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (listBox.SelectedItem != null)
+            {
+                Transfer t = listBox.SelectedItem as Transfer;
+                textBox_Amount.Text = t.Amount.ToString();
+                textBox_Number.Text = t.Number.ToString();
+                selectedIndex = listBox.SelectedIndex;
+            }
+        }
+
+        private void textBox_Number_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            listBox.SelectedItem = null;
+            textBox_Number.SelectAll();
+        }
+
+        private void datePicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+        {
+            riadDateCalculation = datePicker.SelectedDate.Value;
+            saveData();
+            updateRiadParameters();
+        }
+
+        private void labelRiadSYPSent_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            Clipboard.SetText("بدك سعر " + int.Parse(labelRiadSYPSent.Content.ToString()) / 1000.0);
+        }
+
+
         private void textBox_Number_TextChanged(object sender, TextChangedEventArgs e)
         {
+            selectedIndex = -1;
             string query = textBox_Number.Text;
             if (query.Length > 0 && query[0] > 1600)
             {
@@ -489,7 +639,7 @@ namespace Syria_Transfer
             {
                 button_Transfer.Tag = TelCompany.Syriatel;
                 isSyriatel = true;
-                if (transferAmount >= 1500)
+                if (transferAmount >= riadLimit)
                 {
                     button_Transfer.Content = "Copy, open firefox";
                     button_Transfer.IsEnabled = true;
@@ -502,7 +652,6 @@ namespace Syria_Transfer
                     else
                         button_Transfer.IsEnabled = false;
                 }
-
             }
         }
 
@@ -532,7 +681,7 @@ namespace Syria_Transfer
 
                     if (!isSyriatel)
                         button_Transfer.IsEnabled = true;
-                    else if (transferAmount >= 1500)
+                    else if (transferAmount >= riadLimit)
                     {
                         button_Transfer.IsEnabled = true;
                         button_Transfer.Content = "Copy, open Firefox";
@@ -560,9 +709,14 @@ namespace Syria_Transfer
             }
         }
 
-        void checkNumberAmount()
+        bool checkNumber()
         {
-            
+            string number = textBox_Number.Text;
+            return Regex.IsMatch(number, "^(09\\d{8}|\\d{8})$");
+        }
+        bool checkNumber(string s)
+        {
+            return Regex.IsMatch(s, "^(09\\d{8}|\\d{8})$");
         }
     }
 
@@ -571,14 +725,42 @@ namespace Syria_Transfer
         Syriatel,
         MTN
     }
-    public class Transfer
+
+    public enum TransferStatus
     {
+        NotTrasnferred = 0,
+        Transferred = 1
+    }
+
+    public class Transfer : INotifyPropertyChanged
+    {
+        private int amount;
         public DateTime Date { get; set; }
         public string Number { get; set; }
-        public int Amount { get; set; }
+        public int Amount
+        {
+            get { return amount; }
+            set
+            {
+                if (value != amount)
+                {
+                    amount = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
         public int Price { get; set; }
         public TelCompany Company { get; set; }
+        public TransferStatus Status { get; set; }
 
+        public event PropertyChangedEventHandler PropertyChanged;
+        void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
         public Transfer(DateTime date, string number, int amount, int price)
         {
             Date = date;
@@ -586,6 +768,7 @@ namespace Syria_Transfer
             Amount = amount;
             Price = price;
             if (Number[2] == '4' || Number[2] == '5' || Number[2] == '6') Company = TelCompany.MTN;
+            Status = TransferStatus.NotTrasnferred;
         }
         public Transfer(string s)
         {
@@ -597,26 +780,31 @@ namespace Syria_Transfer
             Amount = int.Parse(data[2]);
             Price = int.Parse(data[3]);
             if (Number[2] == '4' || Number[2] == '5' || Number[2] == '6') Company = TelCompany.MTN;
+            Status = (TransferStatus)int.Parse(data[4]);
         }
 
 
         public override string ToString()
         {
-            return string.Format("{0},{1},{2},{3}", Date.ToString("dd-MMM-yy hh:mm:ss tt"), Number, Amount, Price);
+            return string.Format("{0},{1},{2},{3},{4}", Date.ToString("dd-MMM-yy hh:mm:ss tt"), Number, Amount, Price, (int)Status);
         }
         public static void SaveTransfers()
         {
-            File.WriteAllLines(App.transfersPath, App.Transfers.ConvertAll<string>(t => t.ToString()));
-
+            File.WriteAllLines(App.transfersPath, App.NumbersNotTransferred.Concat(App.NumbersTransferred).ToList().ConvertAll<string>(t => t.ToString()));
         }
         public static void GetTransfers()
         {
             if (File.Exists(App.transfersPath))
             {
-                App.Transfers.Clear();
+                App.NumbersNotTransferred.Clear();
+                App.NumbersTransferred.Clear();
                 foreach (string s in File.ReadAllLines(App.transfersPath))
                 {
-                    App.Transfers.Add(new Transfer(s));
+                    Transfer t = new Transfer(s);
+                    if (t.Status == TransferStatus.Transferred)
+                        App.NumbersTransferred.Add(t);
+                    else
+                        App.NumbersNotTransferred.Add(t);
                 }
             }
             else
