@@ -21,14 +21,16 @@
         <TextBox x:Name="textBox_Amount" HorizontalAlignment="Left" Height="41" Margin="183,148,0,0" TextWrapping="Wrap" Text="1000" FontSize="24"
                  VerticalAlignment="Top" Width="154" HorizontalContentAlignment="center" VerticalContentAlignment="Center" Background="LightGreen"
                  GotFocus="textbox_Focus"/>
+        <TextBox x:Name="labelPrice" Text="4000" HorizontalAlignment="Left" Margin="183,199,0,0" VerticalAlignment="Top" Width="154" Height="42"
+               HorizontalContentAlignment="Center" FontSize="24" BorderThickness="1" BorderBrush="Black" VerticalContentAlignment="Center"/>
+        
         <Label x:Name="label_Balance" Content="Balance = " HorizontalAlignment="Left" Margin="78,27,0,0" VerticalAlignment="Top"
                FontSize="26" FontFamily="MS Gothic" Foreground="DarkKhaki"/>
         <Label x:Name="label_Transfers" Content="Transfers" HorizontalAlignment="Left" Margin="0,335,0,0" VerticalAlignment="Top"
                FontSize="16" FontFamily="Segoe Print" Cursor="Hand" MouseLeftButtonUp="TextBlock_MouseUp"/>
-        <Label x:Name="labelInfo" Content="info" HorizontalAlignment="Stretch" Margin="10,383,248.8,0" VerticalAlignment="Top" HorizontalContentAlignment="Center"
-               Foreground="Black" FontFamily="Poor Richard" FontSize="16"/>
-        <Label x:Name="labelPrice" Content="4000" HorizontalAlignment="Left" Margin="183,199,0,0" VerticalAlignment="Top" Width="154" Height="42"
-               HorizontalContentAlignment="Center" FontSize="24" BorderThickness="1" BorderBrush="Black"/>
+        <TextBlock x:Name="labelInfo" Text="info" HorizontalAlignment="Stretch" Margin="10,383,248.8,0" VerticalAlignment="Top"
+               Foreground="Black" FontFamily="Poor Richard" FontSize="16" Height="53" TextAlignment="Center" TextWrapping="Wrap"/>
+       
         <Label x:Name="labelDate" Content="Label" HorizontalAlignment="Left" Margin="29,256,0,0" VerticalAlignment="Top" Foreground="#FF095417" 
                FontSize="14" FontFamily="YouYuan" MouseRightButtonDown="labelDate_MouseRightButtonDown" MouseLeftButtonDown="labelDate_MouseLeftButtonDown"/>
         <Label x:Name="labelAmountSent" Content="Label" HorizontalAlignment="Left" Margin="129,256,0,0" VerticalAlignment="Top" Foreground="#FFC704FF" FontSize="14" FontFamily="YouYuan"/>

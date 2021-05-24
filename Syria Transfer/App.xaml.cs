@@ -43,6 +43,7 @@ namespace Syria_Transfer
             Password = dataRes[1];
 
             Transfer.GetTransfers();
+            Transfer.SaveTransfers();
         }
     }
 }
