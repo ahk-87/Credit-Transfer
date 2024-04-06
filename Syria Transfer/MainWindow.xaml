@@ -87,6 +87,12 @@
             <Label x:Name="labelRiadProfit" Content="Label" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="#7F56F700" Margin="5"
                    Grid.Row="3" Grid.Column="3" HorizontalContentAlignment="Center"/>
         </Grid>
+        <TextBlock Name="LabelLastBalance" HorizontalAlignment="Left" Margin="424,16,0,0" TextWrapping="Wrap" Text="Last balance:" 
+                   VerticalAlignment="Top" FontSize="14"/>
+        <TextBlock Name="LabelLastBalanceDate" HorizontalAlignment="Left" Margin="510,36,0,0" TextWrapping="Wrap" Text="(22-22-2222)" 
+                   VerticalAlignment="Top" FontSize="9" Foreground="Red"/>
+        <TextBlock Name="LabelTrueBalance" Text="44, 443" HorizontalAlignment="Left" Margin="240,67,0,0" VerticalAlignment="Top" Foreground="Gray"
+            />
 
 
     </Grid>

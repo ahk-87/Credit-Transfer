@@ -47,11 +47,14 @@ namespace Syria_Transfer
         string numberString;
 
         public static int RiadPrice = 4000;
-        int price200sypDefault, price200sypDefaultMore2000, price = 5000, priceMore2000 = 4500;
+        int price200sypDefault, price200sypDefaultMore2000, default1000Price = 5000, price = 5000, priceMore2000 = 4500;
         int transferAmount = 1000;
         int oldBalance, newBalance;
         int riadLimit = 1500;
         DateTime riadDateCalculation;
+        string lastBalance = "0";
+        string lastBalanceDate = "01-01-2022";
+        int lastDaySentAmount = 0;
 
         int selectedIndex = -1;
         bool amountSentAboveRiadLimit = false;
@@ -82,6 +85,7 @@ namespace Syria_Transfer
                 }
 
                 price = values["syriaPrice"];
+                default1000Price = price;
                 priceMore2000 = values["syriaPriceMore2000"];
                 RiadPrice = values["syriaRiadPrice"];
             }
@@ -98,6 +102,10 @@ namespace Syria_Transfer
                 riadDateCalculation = DateTime.Parse(lines[1]);
                 string[] tempAddresses = lines[2].Split(new char[] { ',' });
                 addresses.AddRange(tempAddresses);
+                lastBalanceDate = lines[3].Split(new char[] { '=' })[0];
+                lastBalance = lines[3].Split(new char[] { '=' })[1];
+                LabelLastBalance.Text = "Last Balance = " + lastBalance;
+                LabelLastBalanceDate.Text = "(" + lastBalanceDate + ")";
             }
             else
             {
@@ -129,6 +137,16 @@ namespace Syria_Transfer
         async private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             updateSentDay(DateTime.Now.AddHours(-2));
+
+            if (lastDaySentAmount != 0)
+            {
+                int trueBalance = int.Parse(lastBalance, NumberStyles.AllowThousands) - lastDaySentAmount;
+                LabelTrueBalance.Text = trueBalance.ToString("N0");
+            }
+            else
+            {
+                LabelTrueBalance.Text = lastBalance;
+            }
 
             //WebBrowser wb = new WebBrowser();
             //wb.Navigate(Url1);
@@ -239,6 +257,22 @@ namespace Syria_Transfer
                 newBalance = oldBalance;
                 textOldBalance.Text = oldBalance.ToString();
 
+                string today = DateTime.Now.ToString("dd-MM-yyyy");
+                if (!string.Equals(lastBalanceDate, today))
+                {
+                    lastBalance = balanceString;
+                    lastBalanceDate = today;
+                    LabelLastBalance.Text = "Last Balance = " + lastBalance;
+                    LabelLastBalanceDate.Text = "(" + today + ")";
+                    LabelTrueBalance.Text = lastBalance;
+
+                    if (File.Exists(settingsLoc))
+                    {
+                        var lines = File.ReadAllLines(settingsLoc);
+                        lines[3] = lastBalanceDate + "=" + lastBalance;
+                        File.WriteAllLines(settingsLoc, lines);
+                    }
+                }
                 balanceOK = true;
 
                 if (isSyriatel && !amountSentAboveRiadLimit)
@@ -331,7 +365,8 @@ namespace Syria_Transfer
                         textBox_Amount.TextChanged -= textBox_Amount_TextChanged;
                         textBox_Amount.Text = "1000";
                         textBox_Amount.TextChanged += textBox_Amount_TextChanged;
-                        labelPrice.Text = price.ToString();
+                        transferAmount = 1000;
+                        labelPrice.Text = default1000Price.ToString();
                     }
                 }
                 else if (transferAmount >= riadLimit)
@@ -343,6 +378,15 @@ namespace Syria_Transfer
                     labelInfo.Foreground = Brushes.Green;
 
                     addTransfer();
+
+                    if (transferAmount > 1000)
+                    {
+                        textBox_Amount.TextChanged -= textBox_Amount_TextChanged;
+                        textBox_Amount.Text = "1000";
+                        textBox_Amount.TextChanged += textBox_Amount_TextChanged;
+                        transferAmount = 1000;
+                        labelPrice.Text = default1000Price.ToString();
+                    }
                 }
                 else
                 {
@@ -357,7 +401,12 @@ namespace Syria_Transfer
 
                         while (amount > 0)
                         {
-                            if (amount == 1100)
+                            if (amount == 1950 || amount == 2013 || amount == 2588 || amount == 3068 || amount == 4026
+                                || amount == 4506 || amount == 6807 || amount == 7766 || amount == 9587 || amount == 10546
+                                || amount == 11505 || amount == 13039 || amount == 14381 || amount == 16011 || amount == 18312
+                                || amount == 23969)
+                                amountToBeSent = amount;
+                            else if (amount == 1100)
                                 amountToBeSent = 100;
                             else if (amount == 1250)
                                 amountToBeSent = 500;
@@ -463,8 +512,11 @@ namespace Syria_Transfer
 
                             if (transferAmount > 1000)
                             {
+                                textBox_Amount.TextChanged -= textBox_Amount_TextChanged;
                                 textBox_Amount.Text = "1000";
-                                labelPrice.Text = price.ToString();
+                                textBox_Amount.TextChanged += textBox_Amount_TextChanged;
+                                transferAmount = 1000;
+                                labelPrice.Text = default1000Price.ToString();
                             }
                         }
                     }
@@ -517,10 +569,17 @@ namespace Syria_Transfer
         void updateSentDay(DateTime date)
         {
             labelDate.Content = date.ToString("dd-MM-yyyy");
-            labelAmountSent.Content = "SYP sent = " + App.NumbersTransferred.Where(
-                t => t.Date.AddHours(-2).ToShortDateString().Equals(date.ToShortDateString())).Sum(d => d.Amount).ToString();
-            labelMoney.Content = "Money = " + App.NumbersTransferred.Where(
-                t => t.Date.AddHours(-2).ToShortDateString().Equals(date.ToShortDateString())).Sum(d => d.Price).ToString();
+            var query = App.NumbersTransferred.
+                Where(t => t.Date.AddHours(-2).ToShortDateString().Equals(date.ToShortDateString()));
+
+            labelAmountSent.Content = "SYP sent = " + query.Sum(d => d.Amount).ToString();
+            labelMoney.Content = "Money = " + query.Sum(d => d.Price).ToString();
+
+            lastDaySentAmount = query.
+                Where(t => !t.Number.StartsWith("094")).
+                Where(t => !t.Number.StartsWith("095")).
+                Where(t => !t.Number.StartsWith("096")).
+                Sum(d => d.Amount);
 
             if (date.ToShortDateString().Equals(DateTime.Now.AddHours(-2).ToShortDateString()))
             {
@@ -656,7 +715,10 @@ namespace Syria_Transfer
                 sss += s + ",";
             }
             sss = sss.Remove(sss.Length - 1);
-            File.WriteAllText(settingsLoc, textRiadLimit.Text + "\r\n" + riadDateCalculation.ToShortDateString() + "\r\n" + sss);
+            File.WriteAllText(settingsLoc, textRiadLimit.Text 
+                + "\r\n" + riadDateCalculation.ToShortDateString()
+                + "\r\n" + sss
+                + "\r\n" + lastBalanceDate + "=" + lastBalance);
         }
         #endregion
 
@@ -671,6 +733,7 @@ namespace Syria_Transfer
                 Transfer t = listBox.SelectedItem as Transfer;
                 textBox_Amount.Text = t.Amount.ToString();
                 textBox_Number.Text = t.Number.ToString();
+                transferAmount = t.Amount;
                 selectedIndex = listBox.SelectedIndex;
             }
         }
@@ -766,7 +829,7 @@ namespace Syria_Transfer
                 price200syp = transferAmount >= 2000 ? price200sypDefaultMore2000 : price200sypDefault;
                 if (transferAmount > 5000)
                 {
-                    textBox_Amount.Background = new SolidColorBrush(Color.FromArgb(0x80,0xFF,0x45,0x45));
+                    textBox_Amount.Background = new SolidColorBrush(Color.FromArgb(0x80, 0xFF, 0x45, 0x45));
                     //if (transferAmount == 2500)
                     //    price200syp = 800;
                     //else if (transferAmount > 3000)
